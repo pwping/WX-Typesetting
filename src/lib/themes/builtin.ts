@@ -1,4 +1,4 @@
-﻿import type { ThemeMeta } from '../types'
+import type { ThemeMeta } from '../../types'
 import { getCustomThemeByFile } from '../storage/customThemes'
 
 export const BUILTIN_THEMES: ThemeMeta[] = [

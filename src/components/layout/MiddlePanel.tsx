@@ -105,7 +105,7 @@ const handleTypeset = async () => {
 
       let themeLib: string
       if (!theme.isBuiltin && "componentLibrary" in theme && theme.componentLibrary) {
-        themeLib = theme.componentLibrary
+        themeLib = (theme as any).componentLibrary
       } else {
         themeLib = await loadThemeComponentLibrary(theme.componentFile)
       }
@@ -308,7 +308,7 @@ const handleTypeset = async () => {
         ) : (
           <button
             onClick={handleTypeset}
-            disabled={!markdown.trim() || streamStatus === "streaming"}
+            disabled={!markdown.trim()}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-app-accent py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             排版渲染 →
@@ -477,7 +477,7 @@ function fixTextPunctuation(text: string): string {
 
 /** 确保输出末尾有空行（</section> 前至少有一个 <br>） */
 
-function ensureSpanLeaf(html) {
+function ensureSpanLeaf(html: string) {
   try {
     var doc = new DOMParser().parseFromString(html, "text/html")
     var walk = document.createTreeWalker(doc.body, 4)

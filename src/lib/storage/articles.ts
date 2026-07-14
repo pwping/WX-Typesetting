@@ -38,7 +38,7 @@ export async function deleteArticle(id: string): Promise<void> {
   })
 }
 
-export async function saveTypesetResult(result: TypesetResultData): Promise<string> {
+export async function saveTypesetResultData(result: TypesetResultData): Promise<string> {
   const id = `ts_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   await db.typesetResults.add({ ...result, id, createdAt: Date.now() })
   return id
