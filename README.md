@@ -33,6 +33,32 @@
 - **🌓 UI 换肤**：网站整体布局支持 6 种主题风格一键切换
 - **📖 排版历史**：自动保存每次排版记录，支持预览、复制、删除
 
+
+## 🖼️ 效果预览
+
+<p align="center">
+  <img src="./public/images/4.jpg" alt="排版工作台全景" width="800" />
+  <br/>
+  <em>排版工作台全景：左侧富文本编辑器 → 中间 Markdown → 右侧实时预览</em>
+</p>
+
+<p align="center">
+  <img src="./public/images/5.jpg" alt="主题选择与自定义" width="800" />
+  <br/>
+  <em>顶部主题面板：6 套内置主题 + 自定义主题一键切换</em>
+</p>
+
+<p align="center">
+  <img src="./public/images/6.jpg" alt="AI 排版渲染效果" width="800" />
+  <br/>
+  <em>AI 流式排版渲染，实时预览 + 校验结果一目了然</em>
+</p>
+
+<p align="center">
+  <img src="./public/images/7.png" alt="自定义主题生成" width="800" />
+  <br/>
+  <em>自定义主题生成：文字描述或上传参考图，AI 生成专属主题</em>
+</p>
 ## 🏗️ 技术栈
 
 | 技术 | 用途 |
