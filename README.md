@@ -52,6 +52,14 @@
   <img src="./public/images/6.jpg" alt="橄榄手记" width="800" />
   <br/>
   <em>橄榄手记</em>
+<p align="center">
+  <img src="./public/images/7.png" width="260" style="margin:0 6px" />
+  <img src="./public/images/8.png" width="260" style="margin:0 6px" />
+  <img src="./public/images/9.png" width="260" style="margin:0 6px" />
+  <br/>
+  <em>自定义主题生成 · 排版历史 · 快捷工具栏</em>
+</p>
+
 </p>
 
 
