@@ -3,22 +3,22 @@
 <p align="center">
   <img src="./public/images/1.png" alt="排版工作台概览" width="800" />
   <br/>
-  <em>摸鱼绿主题</em>
+  <em>Ai智能排版工作台，6 套内置主题 + 自定义主题一键切换</em>
 </p>
 
 <p align="center">
   <img src="./public/images/2.png" alt="主题选择与自定义" width="800" />
   <br/>
-  <em>顶部主题面板：6 套内置主题 + 自定义主题一键切换</em>
+  <em>通过文字描述或者上传参考图生成自定义主题</em>
 </p>
 
-<p align="center">
-  <img src="./public/images/3.png" alt="AI 排版渲染效果" width="800" />
-  <br/>
-  <em>AI 流式排版渲染，实时预览 + 校验结果一目了然</em>
-</p>
 
-一款**公众号文章 AI 智能排版工具**。输入 Markdown / 富文本文章，选择排版主题，AI 自动生成符合微信公众号编辑器规范的 HTML，可直接复制粘贴到公众号后台。
+这是一款**公众号文章 AI 智能排版网站**。直接打开网站，输入 Markdown / 富文本文章，选择排版主题，AI 自动生成符合微信公众号编辑器规范的 HTML，直接粘进公众号编辑器的精致 HTML —— 6 套精选主题 + 自定义主题生成器 + 双关卡校验
+
+整个项目是基于**摸鱼小李和甲木未来派**开发的开源公众号排版skill(**gzh-design-skill**)
+参考地址：https://github.com/isjiamu/gzh-design-skill
+
+**网站轻量化处理，无需登录，无需部署，无需服务器，本地即可直接使用**。
 
 ## ✨ 特性
 
@@ -37,28 +37,24 @@
 ## 🖼️ 效果预览
 
 <p align="center">
-  <img src="./public/images/4.jpg" alt="排版工作台全景" width="800" />
+  <img src="./public/images/4.jpg" alt="摸鱼绿主题" width="800" />
   <br/>
   <em>摸鱼绿主题</em>
 </p>
 
 <p align="center">
-  <img src="./public/images/5.jpg" alt="主题选择与自定义" width="800" />
+  <img src="./public/images/5.jpg" alt="红白色系主题" width="800" />
   <br/>
-  <em>顶部主题面板：6 套内置主题 + 自定义主题一键切换</em>
+  <em>红白色系主题</em>
 </p>
 
 <p align="center">
-  <img src="./public/images/6.jpg" alt="AI 排版渲染效果" width="800" />
+  <img src="./public/images/6.jpg" alt="橄榄手记" width="800" />
   <br/>
-  <em>AI 流式排版渲染，实时预览 + 校验结果一目了然</em>
+  <em>橄榄手记</em>
 </p>
 
-<p align="center">
-  <img src="./public/images/7.png" alt="自定义主题生成" width="800" />
-  <br/>
-  <em>自定义主题生成：文字描述或上传参考图，AI 生成专属主题</em>
-</p>
+
 ## 🏗️ 技术栈
 
 | 技术 | 用途 |
