@@ -3,7 +3,7 @@
 <p align="center">
   <img src="./public/images/1.png" alt="排版工作台概览" width="800" />
   <br/>
-  <em>排版工作台全景：左侧富文本编辑器 → 中间 Markdown → 右侧实时预览</em>
+  <em>摸鱼绿主题</em>
 </p>
 
 <p align="center">
@@ -39,7 +39,7 @@
 <p align="center">
   <img src="./public/images/4.jpg" alt="排版工作台全景" width="800" />
   <br/>
-  <em>排版工作台全景：左侧富文本编辑器 → 中间 Markdown → 右侧实时预览</em>
+  <em>摸鱼绿主题</em>
 </p>
 
 <p align="center">
