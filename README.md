@@ -1,5 +1,23 @@
 # 🤖 AI 智能排版工作台
 
+<p align="center">
+  <img src="./public/images/1.png" alt="排版工作台概览" width="800" />
+  <br/>
+  <em>排版工作台全景：左侧富文本编辑器 → 中间 Markdown → 右侧实时预览</em>
+</p>
+
+<p align="center">
+  <img src="./public/images/2.png" alt="主题选择与自定义" width="800" />
+  <br/>
+  <em>顶部主题面板：6 套内置主题 + 自定义主题一键切换</em>
+</p>
+
+<p align="center">
+  <img src="./public/images/3.png" alt="AI 排版渲染效果" width="800" />
+  <br/>
+  <em>AI 流式排版渲染，实时预览 + 校验结果一目了然</em>
+</p>
+
 一款**公众号文章 AI 智能排版工具**。输入 Markdown / 富文本文章，选择排版主题，AI 自动生成符合微信公众号编辑器规范的 HTML，可直接复制粘贴到公众号后台。
 
 ## ✨ 特性
