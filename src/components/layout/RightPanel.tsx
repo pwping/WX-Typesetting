@@ -13,7 +13,7 @@ export function RightPanel() {
   const getAllThemes = useThemeStore((s) => s.getAllThemes)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [copied, setCopied] = useState(false)
-  const copyTimer = useRef<ReturnType<typeof setTimeout>>()
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const allThemes = getAllThemes()
   const theme = Array.isArray(allThemes) ? allThemes.find((t) => t && t.id === selectedThemeId) : undefined
