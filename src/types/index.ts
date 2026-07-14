@@ -59,6 +59,7 @@ export interface CustomTheme extends ThemeMeta {
   componentLibrary: string
   previewHtml?: string
   description?: string
+  createdAt: number
 }
 
 export interface ValidationIssue {
