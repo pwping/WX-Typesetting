@@ -20,7 +20,7 @@
 参考地址：https://github.com/isjiamu/gzh-design-skill
 
 
-**网站轻量化处理，无需登录，无需部署，无需服务器，本地即可直接使用**。
+**网站轻量化处理，无需登录，无需服务器，本地即可直接使用**。
 
 
 ## ✨ 特性
@@ -235,6 +235,8 @@ npm run preview
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+
 
 ## 📄 开源协议
 
