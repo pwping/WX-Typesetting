@@ -224,6 +224,40 @@ npm run preview
 
 构建产物在 `dist/` 目录，可直接部署到任何静态文件服务器。
 
+
+
+**🧩 公众号平台限制（已内置兜底）**
+生成的 HTML 严格遵守：禁 <style>/<script>/<div>、class/id、position:fixed/absolute/sticky、float、@media/@keyframes、display:grid、CSS 变量、外部字体；样式全部内联；所有文字用 <span leaf=""> 包裹。这些由校验脚本确定性检查，而非靠模型自觉。
+
+**🔁 可验证循环**
+改组件库或工作流后，用双关卡闭环防回归：
+
+```bash
+python3 scripts/component_lint.py .            # 源头关：扫组件库反模式
+python3 scripts/validate_gzh_html.py out.html  # 产物关：扫最终 HTML 合规
+```
+**源头关** 查 white-space:pre（大空白）、正文四周虚线框、平台禁用项 —— 须 0 ERROR。
+**产物关** 查禁用标签、&lt;span leaf&gt; 包裹、半角标点 —— 须 0 ERROR / 半角 0 WARN。
+逻辑：源头干净 → 产物必然干净。详见 references/eval-cases.md。
+
+**设计原则**
+**约束而非自由** — 用预设主题色板和固定组件保证输出下限，不让模型现场发挥。
+**确定性下沉脚本** — 平台限制这类死规则交给校验脚本，模型只做内容判断。
+**小标签，不用虚线框** — 强调用左竖条/药丸标签，笨重的四周虚线框只留给「待补素材」居中占位。
+**每处经验都可复现** — 踩过的坑写进 gotchas 和校验脚本，用可验证循环防回归。
+**配方优于自由** — 先按文章类型查主题库的「配方表」定组件组合，再装配，同类文章排版气质稳定。
+**克制用色** — 主色只在锚点出现（全文 ≤5 处），大面积白底 + 灰阶，彩色只做点缀。
+**灰阶承重** — 约 90% 的文字交给一套中性灰阶，色彩不承担正文阅读，避免花哨。
+**🧠 方法论：不止 6 套，自己造主题**
+**主题生成：一句话 / 一张参考图，现造一套新主题**
+内置 6 套不够用时不必等更新——让 AI 现造一套。背后是 [references/theme-generator.md](https://github.com/isjiamu/gzh-design-skill/blob/main/references/theme-generator.md) 定义的第二条工作流：
+
+**收集偏好**（一次问全，不逐条追问）：主题描述必填（或给参考图），名称 / 主色 / 背景 / 正文色 / 强调色 / 装饰色 / 字体 / 圆角 / 阴影 / 适用场景可留空自动补全。
+**生成区块库**：AI 产出 45~75 个区块的完整 HTML 组件库，存到 assets/theme-previews/{id}.html，浏览器整页一次浏览确认风格（不逐块问）。
+**转标准主题库 + 登记**：确认后转成 references/theme-{id}.md（补 &lt;span leaf&gt;、补齐五章节：变量表 / 组件 / 骨架 / 配方表 / 映射表），登记进 theme-index，跑 component_lint.py 到 0 ERROR。
+**即刻同权**：之后排版和内置主题完全一样，直接说「用 XX 主题排这篇」。
+
+
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
