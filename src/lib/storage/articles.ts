@@ -44,7 +44,7 @@ export async function saveTypesetResultData(result: TypesetResultData): Promise<
   return id
 }
 
-export async function getTypesetResults(articleId: string): Promise<TypesetResult[]> {
+export async function getTypesetResults(articleId: string): Promise<TypesetResultData[]> {
   return db.typesetResults
     .where('articleId')
     .equals(articleId)
