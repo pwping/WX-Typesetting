@@ -1,0 +1,275 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #059669;
+  --app-surface: #ffffff;
+  --app-border: #d4d4d8;
+  --app-accent: #059669;
+  --app-accent-light: #a7f3d0;
+  --app-accent-text: #047857;
+  --app-text: #18181b;
+  --app-text-secondary: #52525b;
+  --app-text-tertiary: #a1a1aa;
+  --app-hover: #f4f4f5;
+  --app-active: #e4e4e7;
+  --radius: 8px;
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+}
+
+[data-website-theme="moyu-green"] {
+  --app-bg: #059669;
+  --app-surface: #ffffff;
+  --app-border: #a7f3d0;
+  --app-accent: #059669;
+  --app-accent-light: #a7f3d0;
+  --app-accent-text: #047857;
+  --app-text: #111827;
+  --app-text-secondary: #374151;
+  --app-text-tertiary: #6b7280;
+  --app-hover: #f0fdf4;
+  --app-active: #d1fae5;
+  --radius: 12px;
+}
+
+[data-website-theme="red-white"] {
+    --app-bg: #fecaca;
+  --app-surface: #ffffff;
+  --app-border: #fca5a5;
+  --app-accent: #dc2626;
+  --app-accent-light: #fecaca;
+  --app-accent-text: #991b1b;
+  --app-text: #1c1917;
+  --app-text-secondary: #44403c;
+  --app-text-tertiary: #78716c;
+  --app-hover: #fef2f2;
+  --app-active: #fecaca;
+  --radius: 6px;
+}
+
+[data-website-theme="graphite-minimal"] {
+  --app-bg: #fafafa;
+  --app-surface: #ffffff;
+  --app-border: #d4d4d8;
+  --app-accent: #52525b;
+  --app-accent-light: #f4f4f5;
+  --app-accent-text: #27272a;
+  --app-text: #18181b;
+  --app-text-secondary: #52525b;
+  --app-text-tertiary: #a1a1aa;
+  --app-hover: #f4f4f5;
+  --app-active: #e4e4e7;
+  --radius: 6px;
+}
+
+[data-website-theme="zen-whitespace"] {
+  --app-bg: #f8f9f8;
+  --app-surface: #ffffff;
+  --app-border: #d1d5db;
+  --app-accent: #4a5d52;
+  --app-accent-light: #f0f4f1;
+  --app-accent-text: #3a4a40;
+  --app-text: #1a2a20;
+  --app-text-secondary: #4a5d52;
+  --app-text-tertiary: #8a9a8f;
+  --app-hover: #f8f9f8;
+  --app-active: #e7e9e7;
+  --radius: 14px;
+}
+
+[data-website-theme="moyu-ticket"] {
+  --app-bg: #059669;
+  --app-surface: #ffffff;
+  --app-border: #a7f3d0;
+  --app-accent: #059669;
+  --app-accent-light: #a7f3d0;
+  --app-accent-text: #047857;
+  --app-text: #111827;
+  --app-text-secondary: #374151;
+  --app-text-tertiary: #6b7280;
+  --app-hover: #f0fdf4;
+  --app-active: #d1fae5;
+  --radius: 4px;
+}
+
+[data-website-theme="olive-journal"] {
+    --app-bg: #1e1f23;
+  --app-surface: #ffffff;
+  --app-border: #d6d3d1;
+  --app-accent: #1e1f23;
+  --app-accent-light: #d6d3d1;
+  --app-accent-text: #ed7b2f;
+  --app-text: #1c1917;
+  --app-text-secondary: #44403c;
+  --app-text-tertiary: #78716c;
+  --app-hover: #fafaf9;
+  --app-active: #e7e5e4;
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--app-bg);
+  color: var(--app-text);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, textarea, select {
+  transition: all var(--transition-fast);
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--app-border);
+  border-radius: 3px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--app-text-tertiary);
+}
+
+/* ProseMirror editor styles */
+.ProseMirror {
+  outline: none;
+  min-height: 100%;
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--app-text);
+}
+
+.ProseMirror p {
+  margin: 0 0 12px;
+}
+
+.ProseMirror h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 24px 0 12px;
+}
+
+.ProseMirror h2 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+}
+
+.ProseMirror h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 24px;
+  margin: 0 0 12px;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid var(--app-accent);
+  padding-left: 12px;
+  margin: 12px 0;
+  color: var(--app-text-secondary);
+}
+
+.ProseMirror code {
+  background: var(--app-hover);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+}
+
+.ProseMirror pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--app-border);
+  margin: 20px 0;
+}
+
+.ProseMirror .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--app-text-tertiary);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Markdown editor */
+.md-editor {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 20px;
+  font-family: var(--font-mono, "SF Mono", Consolas, Monaco, monospace);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--app-text);
+  background: var(--app-surface);
+}
+
+.md-editor:focus {
+  outline: none;
+}
