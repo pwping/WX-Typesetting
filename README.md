@@ -15,10 +15,13 @@
 
 这是一款**公众号文章 AI 智能排版网站**。直接打开网站，输入 Markdown / 富文本文章，选择排版主题，AI 自动生成符合微信公众号编辑器规范的 HTML，直接粘进公众号编辑器的精致 HTML —— 6 套精选主题 + 自定义主题生成器 + 双关卡校验
 
+
 整个项目是基于**摸鱼小李和甲木未来派**开发的开源公众号排版skill(**gzh-design-skill**)
 参考地址：https://github.com/isjiamu/gzh-design-skill
 
+
 **网站轻量化处理，无需登录，无需部署，无需服务器，本地即可直接使用**。
+
 
 ## ✨ 特性
 
@@ -57,7 +60,7 @@
   <img src="./public/images/8.png" width="260" style="margin:0 6px" />
   <img src="./public/images/9.png" width="260" style="margin:0 6px" />
   <br/>
-  <em>自定义主题生成 · 排版历史 · 快捷工具栏</em>
+  <em>石墨极简风、留白禅意风、摸鱼票据风</em>
 </p>
 
 </p>
@@ -102,9 +105,15 @@ npm run dev
 ### 配置 API Key
 
 1. 点击右上角 **API 配置** 按钮
-2. 选择供应商（DeepSeek / Kimi）和模型
+2. 选择供应商（DeepSeek / Kimi）和模型，配置API key。配置kimi主要是通过参考图生成自定义主图需要识图的模型，如不需要自定义主题是不用配置kimi
 3. 输入 API Key，点击保存
-4. API Key 使用浏览器指纹加密后存储在 `localStorage`，不上传服务器
+4. API Key 使用浏览器指纹加密后存储在 `localStorage`，不上传服务器（所有数据都不上传，统统存在本地）
+5. 所有数据存你本地，你的APIkey放心配置，但有个缺点就是**清除浏览器缓存的时候不要选择清理Cookie** ,如清理cookie所有配置信息和排版历史记录都会被清掉，需重新配置API等信息
+<p align="center">
+  <img src="./public/images/10.png" alt="本地存储说明" />
+</p>
+
+   
 
 > 💡 **推荐配置**：
 > - **排版渲染**：DeepSeek V4 Flash（便宜快速，适合文章排版）
