@@ -282,15 +282,16 @@
 - **目录卡片、标签胶囊、按钮、小标题等容器内的文字，如果容器宽度有限，必须使用 `overflow:hidden;text-overflow:ellipsis;white-space:nowrap` 防止文字溢出换行或撑破布局。副标题、描述文字尤其要注意**。
 - **正文段落默认使用 `text-align:justify` 保持两端对齐，提升阅读舒适度**。
 - **正文字号统一使用 `font-size:16px`，所有正文段落组件都必须是 16px**。章节标题、引用块、卡片标题等可用更大字号（最大 24px），但正文段落统一为 16px，不允许使用 14px、15px 或其他字号。
+- **颜色/字体的内联位置（微信安全）**：所有文字的 `color` / `font-weight` / `font-style` 必须放在**内层 `<span leaf="">` 自身**或其紧邻包裹的 `<span style="...">` 上，禁止只放在外层容器（如 `<p>`/`<section>`/`<h3>`）。因为微信编辑器在「内容分析」时倾向于剥离外层容器的颜色属性，导致只保留默认黑色。正确结构示例：`<p style="padding-left:14px;border-left:3px solid 主题主色;"><span style="color:主题标题色;font-weight:800;font-size:18px;"><span leaf="">标题文字</span></span></p>`
 - **内容区左右边距统一为 10px（即全局容器 padding:0 10px），避免内容太靠屏幕边缘或浪费太多左右空间。所有区块的内部间距也以此为准，保持视觉统一**。
 
-7.4 禁止或谨慎使用的能力：
-- 不要使用 `<div>`、`<style>`、`<script>`、`form`、`input`、`button`、`textarea`、`select`、`video`、`audio`、`canvas`、`svg`、`iframe`。
-- 不要使用 JavaScript 事件、动画、悬停态、过渡、滤镜交互、粘性定位、固定定位。
-- 不要使用 CSS Grid、复杂 Flex 布局、`position: sticky`、`position: fixed`、`backdrop-filter`、CSS 变量、伪元素、媒体查询。
-- 不要把 `table`、`tr`、`td` 用作通用页面布局、分栏布局、按钮编排、卡片宫格或图片区块骨架；它们只应在真实表格语义下出现。
-- 不要依赖 `aspect-ratio`、`object-fit`、`gap`、`z-index`、复杂绝对定位层叠来完成核心布局；这些能力即使出现，也不能成为结构成立的前提。
-- 不要生成任何需要点击后才成立的交互式组件；所有区块都必须是静态内容即可成立。
+7.4 平台红线（与 SKILL.md 一致）：
+- **禁止**：`<style>`、`<script>`、`<div>`、`class`/`id` 属性、`position:fixed/absolute/sticky`、`float`、`@media`、`@keyframes`、`display:grid`、CSS 变量、外部字体/CSS
+- **必须**：样式全部内联 `style`；所有文字节点用 `<span leaf="">文字</span>` 包裹（否则粘贴后样式丢失）
+- **可用**：`display:flex`（有限）、`linear-gradient`、`border-radius`、`box-shadow`、`<section>/<p>/<span>/<strong>/<img>/<h3>`
+- **禁止**：JavaScript 事件、动画、悬停态、过渡、滤镜交互
+- **禁止**：把 `table`/`tr`/`td` 用作页面布局或分栏（仅限真实表格语义）
+- **禁止**：任何需要点击才成立的交互式组件
 
 7.5 图片与媒体兼容规则：
 - 图片必须使用标准 `img` 标签，并提供明确宽度语义，保证复制后仍能独立显示。

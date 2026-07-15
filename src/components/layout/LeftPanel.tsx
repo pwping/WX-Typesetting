@@ -161,6 +161,11 @@ export function LeftPanel() {
               useSettingsStore.getState().setShowBalanceAlert(true, providerName)
               setGenerating(false)
               setGenProgress("")
+            } else if (err.message.startsWith('密钥无效:')) {
+              const providerName = err.message.split(':')[1]
+              useSettingsStore.getState().setShowBalanceAlert(true, `密钥无效:${providerName}`)
+              setGenerating(false)
+              setGenProgress("")
             } else {
               setGenProgress(`失败: ${err.message}`)
               setGenerating(false)

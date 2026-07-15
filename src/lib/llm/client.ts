@@ -97,6 +97,10 @@ export async function streamChat(
       const provider = getProvider(config.providerId)
       const providerName = provider?.name || config.providerId
       callbacks.onError(new Error(`余额不足:${providerName}`))
+    } else if (response.status === 401 || /invalid|incorrect.*api.?key|authentication.*fail/i.test(errMsg)) {
+      const provider = getProvider(config.providerId)
+      const providerName = provider?.name || config.providerId
+      callbacks.onError(new Error(`密钥无效:${providerName}`))
     } else {
       callbacks.onError(new Error(errMsg))
     }

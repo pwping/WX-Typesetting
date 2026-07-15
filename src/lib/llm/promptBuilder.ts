@@ -39,6 +39,12 @@ export async function buildTypesetPrompt(
     "### 通用组件库（代码块/图片/小标签标题）\n" +
     commonComponents + "\n\n" +
     "请严格按照上述组件库的 HTML 代码进行排版。HTML 一律从组件库中取，不要凭记忆手写。一篇文章只用这一套主题的组件，不跨主题混用。\n\n" +
+    "**📌 标题引用铁律（所有主题通用）**：\n" +
+    "  - 原文有 `# 标题` → **必须一字不差**用作文章封面标题，禁止自行总结或改写\n" +
+    "  - 原文有 `## 章节标题` → **必须一字不差**用作章节标题和目录项文字，禁止自行总结或改写。`##` 后面一整行文字全部都是标题，不管这行里有什么标点符号（冒号、逗号、破折号等），都不能截断、不能行内拆分\n" +
+    "  - 原文没有 `# 标题` → 分析全文主题，自行总结一个合适的封面标题\n" +
+    "  - 原文没有 `## 章节标题` → 分析段落内容，为每段/每章概括一个合适的二级标题（此时可以自行总结）\n" +
+    "  - 正文段落内容**必须严格保留原文措辞**，不得删改、不得增写、不得重新组织语言\n\n" +
     "**⚠️ 目录组件铁律**：如果主题组件库中包含目录/导读/本文看点组件，则严格按照该组件的 HTML 结构（包括容器样式、颜色、排列方式、布局方向）进行渲染。**禁止自创目录样式、禁止改变目录的布局方式**。目录的显示方式（横向卡片滚动 or 竖向列表排列）由主题组件库中的目录组件 HTML 决定，你只负责按该样式填充内容，不得自行决定或改变。目录项数量必须与 ## 章节数量完全一致，有几个章节就显示几个，不得精选、不得跳过、不得省略任何章节。目录中的每个标题文字必须与下方 ## 章节标题完全一样，不得改写、不得缩写。目录项顺序必须与 ## 章节出现顺序完全一致。\n\n" +
       "每个目录项的内容（标题文字）必须根据 ## 章节内容动态生成，不能只复制主题模板中的示例文字。目录卡片上的标题文字必须与对应的 ## 章节标题一字不差。如果主题组件库中没有目录组件，则跳过目录，直接从封面进入正文。\n\n" +
     "**⚠️ 占位素材铁律**：原文中出现的以下占位标记，必须使用通用组件库中的 **2c 待补素材占位板块**（浅底柔虚线框 + 居中图标与说明）进行渲染，禁止用普通段落、引用块、左对齐提示或其他任何非 2c 的方式处理——2c 是唯一正确的占位组件，无论使用哪个主题都必须遵守：\n" +
@@ -53,7 +59,8 @@ export async function buildTypesetPrompt(
     "4. 是否没有使用 Markdown 代码围栏？输出直接是纯 HTML，不要包裹任何围栏标记\n" +
     "5. 代码块必须使用通用组件库中的 1a 深色代码块模板（每行一个 <p style=\"margin:0\">），禁止使用 <pre> 标签或 white-space:pre 样式。行内代码必须使用 1c 行内代码模板\n" +
     "6. 正文段落组件中的 font-size 是否为 16px？不允许更小或更大的字号\n" +
-    "7. HTML 最后必须在所有组件闭合后添加一个空段落：`<p style='margin:0;'><span leaf=''><br></span></p>`，确保在公众号编辑器末尾有一个可点击输入的空白行，方便继续添加内容" +
+    "7. **加粗/下划线微信安全规则**：`**加粗**`必须渲染为 `<span style=\"font-weight:700;\"><span leaf=\"\">加粗</span></span>`；下划线标记（Markdown 无原生语法，用 `<u>` 标识）必须渲染为 `<span style=\"border-bottom:2px solid 主题主色;font-weight:600;\"><span leaf=\"\">文字</span></span>`。禁止使用 `text-decoration:underline`（微信会丢失）\n" +
+    "8. HTML 最后必须在所有组件闭合后添加一个空段落：`<p style='margin:0;'><span leaf=''><br></span></p>`，确保在公众号编辑器末尾有一个可点击输入的空白行，方便继续添加内容" +
     noImageRule
 
   const userPrompt = "请将以下 Markdown 文章用「" + themeName + "」主题完整排版为公众号 HTML。\n\n" +
@@ -114,7 +121,19 @@ export async function buildCustomThemePrompt(
     "精选 20-35 个核心组件，按 `## 组件 N 组件名称` 编号，组件 1 为「全局容器」。每个组件放在 ` ```html ` 围栏内。\n" +
     "所有文字必须用 `<span leaf=\"\">文字</span>` 包裹，装饰空元素放 `<span leaf=\"\"><br></span>`。\n" +
     "是否包含目录组件：分析设计风格后决定——信息密度高的主题（教程/测评/科技/数据/商务/工具盘点）需要目录；极简随笔/禅意/文学类可省略。如果需要目录，选择一个明确的布局方向（横向卡片滚动 或 竖向列表），禁止在同一次生成中使用两种。这个决策必须在设计变量速查表中以 `TOC: 横向卡片 | 竖向列表 | 无` 的形式明确记录。\n" +
-    "每个带图片槽位的组件都提供纯文字版变体。\n\n" +
+    "每个带图片槽位的组件都提供纯文字版变体。\n" +
+    "**底部互动区（footer-cta 必选）**：严格遵循摸鱼绿主题 13a 的结构，分两个独立区域：\n" +
+    "  **区域一（作者签名区）**：以正文段落形式放在 footer-cta 之前，用 `我是 {{作者名}}，{{一句话简介}}`\n" +
+    "  **区域二（互动卡片 — 细边框容器）**：用 `<section style=\"border:1px solid 主题分割线色;border-radius:16px;padding:32px 20px;text-align:center;margin:0 0 24px;\">` 包裹，容器内按顺序包含：\n" +
+    "    · 引导文案：`<p style=\"font-size:13px;font-weight:bold;line-height:1.6;color:#111827;margin-bottom:20px;\">既然看到这里了，如果觉得有用，随手点个赞、在看、转发三连吧。</span></p>`（措辞可微调）\n" +
+    "    · 三个图标的**横向布局**：外层 `<p style=\"text-align:center;margin:0 0 16px;padding:0;white-space:nowrap;\">`，每个图标用 `<span style=\"display:inline-block;text-align:center;color:#4B5563;vertical-align:top;margin:0 24px;\">`，**不要用 width:33% 撑满**，用 margin 控制间距，图标自身宽度由内容自然撑起\n" +
+    "    · 每个图标内：40×40px 圆形白色容器 `<span style=\"display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#fff;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.05);border:1px solid #F3F4F6;\">` 包裹 SVG + 下方 `<span style=\"display:block;font-size:10px;font-weight:600;text-align:center;margin-top:6px;\">` 文字标签\n" +
+    "    · 转发图标容器色改为主题主色：`color:主题主色`、`background:主题浅底色`、`border-color:主题主色半透明`、`box-shadow:0 2px 4px 主题主色半透明`\n" +
+    "    · 底部 `<p style=\"font-size:10px;color:#9CA3AF;letter-spacing:1px;margin:0;\">THANKS FOR READING</p>`\n" +
+    "  SVG 图标代码原样复制下方摸鱼绿的三个图标，禁止自己画或换图标：\n" +
+    "  点赞：`<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3\"></path></svg>`\n" +
+    "  在看：`<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\"></path></svg>`\n" +
+    "  转发：`<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 18v-4a8 8 0 0 1 8-8h8\"></path><polyline points=\"16 2 20 6 16 10\"></polyline></svg>`\n\n" +
     "### 3. 完整文章模板骨架\n" +
     "用 ` ```html ` 围栏展示从封面→（如有目录，紧跟封面后）→各章节→结尾的完整装配顺序。目录如果存在，必须放在封面之后、第一个章节标题之前，禁止放在标题/封面前面。\n\n" +
     "### 4. 文章类型 → 组件组合配方表\n" +

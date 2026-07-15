@@ -180,6 +180,9 @@ const handleTypeset = async () => {
             if (err.message.startsWith('余额不足:')) {
               const providerName = err.message.split(':')[1]
               useSettingsStore.getState().setShowBalanceAlert(true, providerName)
+            } else if (err.message.startsWith('密钥无效:')) {
+              const providerName = err.message.split(':')[1]
+              useSettingsStore.getState().setShowBalanceAlert(true, `密钥无效:${providerName}`)
             }
             setStreamStatus("error", err.message)
           },
@@ -381,6 +384,8 @@ function replaceDivWithSection(html: string): string {
 /** 去除微信不支持的 CSS 属性，防止布局在微信编辑器中崩溃 */
 function removeUnsupportedWechatCss(html: string): string {
   return html
+    .replace(/\sid\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/\sclass\s*=\s*["'][^"']*["']/gi, '')
     .replace(/position\s*:\s*(fixed|absolute|sticky)\s*;?/gi, '')
     .replace(/float\s*:\s*(left|right|none|inline-start|inline-end)\s*;?/gi, '')
     .replace(/overflow-x:\s*auto;?/gi, '')
@@ -456,6 +461,8 @@ function fixTextPunctuation(text: string): string {
       result += "\u2018"
     } else if (ch === "," && /[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/.test(result.slice(-1))) {
       result += "\uFF0C"
+    } else if (ch === "." && /[\u4e00-\u9fff]/.test(result.slice(-1))) {
+      result += "\u3002"
     } else if (ch === "?" && /[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/.test(result.slice(-1))) {
       result += "\uFF1F"
     } else if (ch === "!" && /[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/.test(result.slice(-1))) {
