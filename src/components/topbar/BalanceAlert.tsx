@@ -7,15 +7,18 @@ export function BalanceAlert() {
   const setShow = useSettingsStore((s) => s.setShowBalanceAlert)
   const saveKey = useSettingsStore((s) => s.saveKey)
   const providerId = useSettingsStore((s) => s.providerId)
-  const balanceMessage = useSettingsStore((s) => s.balanceAlertMessage)
+  const rawMessage = useSettingsStore((s) => s.balanceAlertMessage)
 
-  // 从余额不足错误信息中解析出实际的供应商名称和 ID
-  const failedProviderId = balanceMessage
-    ? (PROVIDERS.find((p) => p.name === balanceMessage)?.id || PROVIDERS.find((p) => p.id === balanceMessage)?.id)
+  // 判断告警类型：密钥无效 / 余额不足
+  const isInvalidKey = rawMessage.startsWith('密钥无效:')
+  const effectiveProviderName = isInvalidKey ? rawMessage.replace('密钥无效:', '') : rawMessage
+
+  const failedProviderId = effectiveProviderName
+    ? (PROVIDERS.find((p) => p.name === effectiveProviderName)?.id || PROVIDERS.find((p) => p.id === effectiveProviderName)?.id)
     : providerId
   const failedProvider = failedProviderId ? PROVIDERS.find((p) => p.id === failedProviderId) : null
   const currentProvider = failedProvider
-  const failedProviderName = balanceMessage || currentProvider?.name || 'API'
+  const failedProviderName = effectiveProviderName || currentProvider?.name || 'API'
   const deepseekUrl =
     failedProviderId === 'deepseek'
       ? 'https://platform.deepseek.com/top_up'
@@ -51,8 +54,8 @@ export function BalanceAlert() {
       >
         <div className="mb-1 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-medium text-app-text">
-            <span className="text-lg">😅</span>
-            {currentProvider?.name || 'API'} 余额不足
+            <span className="text-lg">{isInvalidKey ? '😰' : '😅'}</span>
+            {currentProvider?.name || 'API'} {isInvalidKey ? 'API Key 无效' : '余额不足'}
           </h2>
           <button
             onClick={() => setShow(false, '')}
@@ -63,12 +66,27 @@ export function BalanceAlert() {
         </div>
 
         <p className="mb-1 mt-3 text-xs leading-relaxed text-app-text-secondary">
-          当前 {currentProvider?.name || '当前'} API 账户余额已用完，排版和文案生成功能暂时无法使用。
+          {isInvalidKey
+            ? `当前 ${currentProvider?.name || '当前'} 的 API Key 无效，请检查是否填写正确或已过期。`
+            : `当前 ${currentProvider?.name || '当前'} API 账户余额已用完，排版和文案生成功能暂时无法使用。`}
         </p>
 
         <div className="my-4 space-y-3">
-          {/* 方案一：充值 */}
-          {deepseekUrl && (
+          {/* 方案一：充值或重新配置 */}
+          {isInvalidKey ? (
+            <div className="rounded-xl border border-app-border bg-app-hover p-4">
+              <p className="text-xs font-semibold text-app-text">方案一：重新配置</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-app-text-secondary">
+                请检查 {currentProvider?.name} 的 API Key 是否正确，或重新复制 Key 填入。
+              </p>
+              <button
+                onClick={() => { setShow(false, ''); setTimeout(() => useSettingsStore.getState().setShowApiKeyDialog(true), 100) }}
+                className="mt-2 inline-flex items-center gap-1 rounded-lg bg-app-accent px-3 py-1.5 text-[11px] font-medium text-white transition hover:opacity-90"
+              >
+                去配置 API Key →
+              </button>
+            </div>
+          ) : (deepseekUrl && (
             <div className="rounded-xl border border-app-border bg-app-hover p-4">
               <p className="text-xs font-semibold text-app-text">方案一：充值</p>
               <p className="mt-1 text-[11px] leading-relaxed text-app-text-secondary">
@@ -83,7 +101,7 @@ export function BalanceAlert() {
                 前往充值 →
               </a>
             </div>
-          )}
+          ))}
 
           {/* 方案二：切换供应商 */}
           <div className="rounded-xl border border-app-border bg-app-hover p-4">

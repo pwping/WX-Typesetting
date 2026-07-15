@@ -16,6 +16,7 @@ export function CustomThemeDialog() {
   const show = useSettingsStore((s) => s.showCustomThemeDialog)
   const setShow = useSettingsStore((s) => s.setShowCustomThemeDialog)
   const setShowApiKeyDialog = useSettingsStore((s) => s.setShowApiKeyDialog)
+  const setShowBalanceAlert = useSettingsStore((s) => s.setShowBalanceAlert)
   const addCustomTheme = useThemeStore((s) => s.addCustomTheme)
   const selectTheme = useThemeStore((s) => s.selectTheme)
 
@@ -169,6 +170,13 @@ export function CustomThemeDialog() {
             setProgress(`完成 · ${clean.length} 字符`)
           },
           onError: (err) => {
+            if (err.message.startsWith('余额不足:')) {
+              const providerName = err.message.split(':')[1]
+              setShowBalanceAlert(true, providerName)
+            } else if (err.message.startsWith('密钥无效:')) {
+              const providerName = err.message.split(':')[1]
+              setShowBalanceAlert(true, `密钥无效:${providerName}`)
+            }
             setStatus("error")
             setError(err.message)
           },

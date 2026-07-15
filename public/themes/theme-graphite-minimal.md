@@ -91,9 +91,9 @@
   <p style="font-size:11px;color:#A1A1AA;margin:0 0 16px;letter-spacing:2px;">
     <span leaf="">本文看点</span>
   </p>
-  <section style="display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:8px;padding-bottom:4px;">
+  <section style="overflow-x:scroll;-webkit-overflow-scrolling:touch;white-space:nowrap;padding-bottom:4px;">
     <!-- 每个章节一个卡片，有几个章节就复制几个 -->
-    <section style="flex-shrink:0;width:30%;min-width:120px;background:#FAFAFA;border-top:1px solid #E4E4E7;padding:18px 12px 16px;">
+    <section style="display:inline-block;white-space:normal;vertical-align:top;width:30%;min-width:120px;background:#FAFAFA;border-top:1px solid #E4E4E7;padding:18px 12px 16px;margin-right:8px;">
       <p style="font-size:11px;color:#A1A1AA;font-weight:500;margin:0 0 8px;letter-spacing:1px;"><span leaf="">01</span></p>
       <p style="font-size:13px;font-weight:700;color:#27272A;margin:0;line-height:1.5;"><span leaf="">{{章节标题}}</span></p>
     </section>
@@ -604,7 +604,7 @@ GIF 动图角标改极简描边胶囊：边框与字色用石墨主色 `#52525B`
 
   <!-- 2. 前言正文（组件6 段落 × N，放 0 10px 边距 section，第一章之前的开场白） -->
 
-  <!-- 3. 前言导读（组件3，3+ 章节时生成，精选 3 看点） -->
+  <!-- 3. 前言导读（组件3，有 ## 章节时生成，全量展示所有章节，不得精选、不得跳过） -->
 
   <!-- 4. 第一章（组件5 章节标题，margin-top:16px） -->
   <!--    章内：组件6 正文 + 6b 子标题 + 7 行内高亮 + 8 引用 + 9 提示 + 10 标签组 + 11 列表 + 12 数据 + 14 图片 -->
