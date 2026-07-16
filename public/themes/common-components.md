@@ -50,7 +50,7 @@
 ### 1c. 行内代码（正文中的 `code` 短片段）
 
 ```html
-<span style="background:#F1F5F9;color:#DC2626;padding:1px 6px;border-radius:4px;font-family:'SF Mono',Consolas,Monaco,monospace;font-size:16px;"><span leaf="">SKILL.md</span></span>
+<span style="background:#F1F5F9;color:#DC2626;padding:1px 6px;border-radius:4px;font-family:'SF Mono',Consolas,Monaco,monospace;font-size:14px;"><span leaf="">SKILL.md</span></span>
 ```
 
 （文字色 `#DC2626` 换主题主色；底色保持中性浅灰。）
@@ -103,7 +103,7 @@
 ```html
 <section style="margin:0 0 24px;padding:30px 20px;border:1.5px dashed #DAD7D2;border-radius:14px;background:#FAFAF8;text-align:center;">
   <p style="margin:0 0 10px;font-size:26px;line-height:1;"><span leaf="">🎬</span></p>
-  <p style="margin:0;font-size:16px;font-weight:700;color:#9CA3AF;letter-spacing:1px;"><span leaf="">待补素材</span></p>
+  <p style="margin:0;font-size:14px;font-weight:700;color:#9CA3AF;letter-spacing:1px;"><span leaf="">待补素材</span></p>
   <p style="margin:8px 0 0;font-size:13px;color:#B8B5B0;line-height:1.7;"><span leaf="">此处插入：创建 skill 的录屏演示</span></p>
 </section>
 ```
@@ -138,14 +138,14 @@
 
 ```html
 <p style="margin:28px 0 14px;">
-  <span style="display:inline-block;background:#DC2626;color:#FFFFFF;font-size:16px;font-weight:700;padding:5px 16px;border-radius:6px;"><span leaf="">小标题文字</span></span>
+  <span style="display:inline-block;background:#DC2626;color:#FFFFFF;font-size:14px;font-weight:700;padding:5px 16px;border-radius:6px;"><span leaf="">小标题文字</span></span>
 </p>
 ```
 
 ### 3c. 序号药丸 + 标题（清单/步骤）
 
 ```html
-<p style="margin:24px 0 12px;font-size:16px;font-weight:800;color:#1C1917;line-height:1.6;">
+<p style="margin:24px 0 12px;font-size:15px;font-weight:800;color:#1C1917;line-height:1.6;">
   <span style="display:inline-block;background:#FEE2E2;color:#991B1B;border-radius:5px;padding:1px 9px;margin-right:8px;font-weight:900;"><span leaf="">01</span></span>
   <span leaf="">要点标题</span>
 </p>
@@ -168,7 +168,7 @@
   <p style="margin:0 0 6px;">
     <span style="display:inline-block;background:#DC2626;color:#FFFFFF;font-size:11px;font-weight:700;padding:2px 10px;border-radius:4px;letter-spacing:1px;"><span leaf="">提示</span></span>
   </p>
-  <p style="font-size:16px;color:#374151;margin:0;line-height:1.8;">
+  <p style="font-size:14px;color:#374151;margin:0;line-height:1.8;">
     <span leaf="">提示或旁注的正文内容</span>
   </p>
 </section>
