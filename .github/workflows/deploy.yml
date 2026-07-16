@@ -1,4 +1,4 @@
-﻿name: Deploy to Cloudflare Workers
+name: Deploy to Cloudflare Pages
 
 on:
   push:
@@ -17,7 +17,8 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run build
-      - name: Deploy to Cloudflare Workers
+      - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
+          command: pages deploy
