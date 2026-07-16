@@ -31,3 +31,10 @@ _ds3.html
 _moonshot_pricing.html
 _zhipu_docs.html
 overview.md
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
