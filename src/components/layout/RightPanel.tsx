@@ -3,6 +3,7 @@ import { useEditorStore } from "../../store/useEditorStore"
 import { useThemeStore } from "../../store/useThemeStore"
 import { copyHtmlToClipboard, downloadHtml } from "../../lib/clipboard/copyHtml"
 import type { ValidationResult, StreamStatus } from "../../types"
+import { domToPng, domToCanvas } from "modern-screenshot"
 
 export function RightPanel() {
   const generatedHtml = useEditorStore((s) => s.generatedHtml)
@@ -14,6 +15,8 @@ export function RightPanel() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [copied, setCopied] = useState(false)
   const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const [capturing, setCapturing] = useState(false)
+  const [showScreenshotDialog, setShowScreenshotDialog] = useState(false)
 
   const allThemes = getAllThemes()
   const theme = Array.isArray(allThemes) ? allThemes.find((t) => t && t.id === selectedThemeId) : undefined
@@ -47,8 +50,85 @@ export function RightPanel() {
     copyTimer.current = setTimeout(() => setCopied(false), 2000)
   }
 
+  // 创建宽度为渲染HTML原始宽度的容器并等待资源加载
+  const createContainer = async (width: number) => {
+    const container = document.createElement("div")
+    container.style.cssText =
+      `position:fixed;left:-99999px;top:0;width:${width}px;background:#fff;z-index:-1;`
+    container.innerHTML = generatedHtml
+    document.body.appendChild(container)
+    const imgs = Array.from(container.querySelectorAll("img")) as HTMLImageElement[]
+    await Promise.all(
+      imgs.map((img) =>
+        img.complete && img.naturalHeight !== 0
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              img.onload = () => resolve(); img.onerror = () => resolve()
+            })
+      )
+    )
+    if (document.fonts?.ready) await document.fonts.ready
+    await new Promise((r) => requestAnimationFrame(() => r(null)))
+    return container
+  }
+
+  const handleScreenshot = async () => {
+    setShowScreenshotDialog(false)
+    if (!generatedHtml) return
+    setCapturing(true)
+    const container = await createContainer(677)
+    try {
+      const dataUrl = await domToPng(container, {
+        scale: 2, backgroundColor: "#ffffff",
+        width: 677, height: container.scrollHeight,
+        style: { margin: "0", padding: "0" },
+      })
+      const link = document.createElement("a")
+      link.download = `排版截图_${theme?.name || "article"}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) { console.error("截图失败:", err) }
+    finally { document.body.removeChild(container); setCapturing(false) }
+  }
+
+  const handleSliceScreenshot = async () => {
+    setShowScreenshotDialog(false)
+    if (!generatedHtml) return
+    setCapturing(true)
+    const W = 677
+    const H = Math.round(677 * 1.33) // ≈ 900
+    const container = await createContainer(W)
+    try {
+      const canvas = await domToCanvas(container, {
+        scale: 2, backgroundColor: "#ffffff",
+        width: W, height: container.scrollHeight,
+        style: { margin: "0", padding: "0" },
+      })
+      const W_RAW = W * 2
+      const H_RAW = H * 2
+      const totalH = canvas.height
+      const baseName = `截图_${theme?.name || "article"}`
+      let part = 1
+      for (let top = 0; top < totalH; top += H_RAW, part++) {
+        const c = document.createElement("canvas")
+        c.width = W
+        c.height = H
+        const ctx = c.getContext("2d")!
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0, 0, W, H)
+        // 从 2x 源采样缩放到逻辑尺寸，保持清晰度
+        ctx.drawImage(canvas, 0, top, W_RAW, H_RAW, 0, 0, W, H)
+        const link = document.createElement("a")
+        link.download = `${baseName}_${part}.png`
+        link.href = c.toDataURL("image/png")
+        link.click()
+      }
+    } catch (err) { console.error("截贴图失败:", err) }
+    finally { document.body.removeChild(container); setCapturing(false) }
+  }
+
   return (
-    <div className="flex w-[30%] min-w-[260px] flex-col overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm">
+    <div className="relative flex w-[30%] min-w-[260px] flex-col overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm">
       <div className="flex items-center justify-between border-b border-app-border bg-app-surface px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-app-text">预览</span>
@@ -73,6 +153,13 @@ export function RightPanel() {
             className="cursor-pointer rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-[11px] font-medium text-app-text-secondary transition hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-30"
           >
             导出
+          </button>
+          <button
+            onClick={() => setShowScreenshotDialog(true)}
+            disabled={!generatedHtml || capturing}
+            className="cursor-pointer rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-[11px] font-medium text-app-text-secondary transition hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            {capturing ? "截图中..." : "截图"}
           </button>
         </div>
       </div>
@@ -120,6 +207,87 @@ export function RightPanel() {
         status={streamStatus}
         progress={streamProgress}
       />
+
+      {showScreenshotDialog && (
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowScreenshotDialog(false)}
+        >
+          <div
+            className="w-72 overflow-hidden rounded-2xl bg-app-surface shadow-2xl ring-1 ring-app-border"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: "dialogIn 0.18s ease-out" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-app-border px-5 py-3.5">
+              <div className="flex items-center gap-2">
+                <svg className="h-4 w-4 text-app-accent" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                </svg>
+                <span className="text-sm font-semibold text-app-text">选择截图方式</span>
+              </div>
+              <button
+                onClick={() => setShowScreenshotDialog(false)}
+                className="flex h-6 w-6 items-center justify-center rounded-md text-app-text-tertiary transition hover:bg-app-hover hover:text-app-text"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Options */}
+            <div className="p-2.5">
+              {/* 截长图 */}
+              <button
+                onClick={handleScreenshot}
+                className="group flex w-full items-start gap-3 rounded-xl p-3 text-left transition hover:bg-app-hover"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-app-accent-light text-app-accent transition group-hover:scale-105">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                  </svg>
+                </span>
+                <div className="flex-1 pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-semibold text-app-text">截长图</span>
+                    <span className="rounded bg-app-accent/10 px-1.5 py-0.5 text-[9px] font-medium text-app-accent">完整</span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-app-text-tertiary">截取整篇文章为 1 张完整长图</p>
+                </div>
+                <svg className="h-4 w-4 shrink-0 text-app-text-tertiary opacity-0 transition group-hover:opacity-100" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+
+              <div className="my-1 h-px bg-app-border/60" />
+
+              {/* 截贴图 */}
+              <button
+                onClick={handleSliceScreenshot}
+                className="group flex w-full items-start gap-3 rounded-xl p-3 text-left transition hover:bg-app-hover"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 transition group-hover:scale-105 dark:bg-amber-900/30 dark:text-amber-400">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                  </svg>
+                </span>
+                <div className="flex-1 pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-semibold text-app-text">截贴图</span>
+                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">分段</span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-app-text-tertiary">每张尺寸比例 1:1.33，适用于公众号、小红书、抖音等平台的图文</p>
+                </div>
+                <svg className="h-4 w-4 shrink-0 text-app-text-tertiary opacity-0 transition group-hover:opacity-100" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

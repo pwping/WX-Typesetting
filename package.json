@@ -24,6 +24,7 @@
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
     "markdown-it": "^14.3.0",
+    "modern-screenshot": "^4.7.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "turndown": "^7.2.4",
