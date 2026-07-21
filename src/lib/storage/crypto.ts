@@ -77,3 +77,47 @@ export function getSelectedProvider(): string {
 export function setSelectedProvider(providerId: string): void {
   localStorage.setItem('gzh_selected_provider', providerId)
 }
+
+// 通用密钥加密存储（用于图床、第三方服务等任意 Key）
+const SECRET_KEY = 'gzh_secrets'
+
+interface StoredSecrets {
+  [name: string]: {
+    encryptedValue: string
+  }
+}
+
+export function saveSecret(name: string, value: string): void {
+  const all = getAllSecrets()
+  all[name] = {
+    encryptedValue: CryptoJS.AES.encrypt(value, deriveKey()).toString(),
+  }
+  localStorage.setItem(SECRET_KEY, JSON.stringify(all))
+}
+
+export function getSecret(name: string): string | null {
+  const all = getAllSecrets()
+  const entry = all[name]
+  if (!entry) return null
+  try {
+    return CryptoJS.AES.decrypt(entry.encryptedValue, deriveKey()).toString(
+      CryptoJS.enc.Utf8,
+    )
+  } catch {
+    return null
+  }
+}
+
+export function deleteSecret(name: string): void {
+  const all = getAllSecrets()
+  delete all[name]
+  localStorage.setItem(SECRET_KEY, JSON.stringify(all))
+}
+
+function getAllSecrets(): StoredSecrets {
+  try {
+    return JSON.parse(localStorage.getItem(SECRET_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
