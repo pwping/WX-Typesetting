@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { ApiKeyConfig } from '../types'
-import { getApiKey, getSelectedProvider, setSelectedProvider, saveApiKey, deleteApiKey } from '../lib/storage/crypto'
+import { getApiKey, getSelectedProvider, setSelectedProvider, saveApiKey, deleteApiKey, saveSecret, getSecret } from '../lib/storage/crypto'
 import { getProvider } from '../lib/llm/providers'
 
 interface SettingsState {
@@ -11,6 +11,9 @@ interface SettingsState {
   showApiKeyDialog: boolean
   showCustomThemeDialog: boolean
   showBalanceAlert: boolean
+  showImgbbDialog: boolean
+  imgbbKey: string
+  imgbbExpiration: number
   balanceAlertMessage: string
   keyVersion: number
 
@@ -24,6 +27,9 @@ interface SettingsState {
   getApiKeyConfig: () => ApiKeyConfig | null
   getHtmlRenderConfig: () => ApiKeyConfig | null
   getVisionConfig: () => ApiKeyConfig | null
+  loadImgbbConfig: () => void
+  saveImgbbConfig: (apiKey: string, expiration: number) => void
+  setShowImgbbDialog: (show: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -35,6 +41,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   showCustomThemeDialog: false,
   showBalanceAlert: false,
   balanceAlertMessage: '',
+  showImgbbDialog: false,
+  imgbbKey: '',
+  imgbbExpiration: 0,
   keyVersion: 0,
 
   loadSettings: () => {
@@ -42,16 +51,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const stored = getApiKey(providerId)
     if (stored) {
       // Auto-upgrade deprecated models
-      const oldModels = ['deepseek-chat', 'deepseek-reasoner', 'moonshot-v1-8k', 'moonshot-v1-32k']
+      const oldModels = ['deepseek-chat', 'deepseek-reasoner', 'moonshot-v1-8k', 'moonshot-v1-32k', 'kimi-k2.5']
       const upgradeMap: Record<string, string> = {
         'deepseek-chat': 'deepseek-v4-flash',
         'deepseek-reasoner': 'deepseek-v4-flash',
         'moonshot-v1-8k': 'kimi-k2.6',
         'moonshot-v1-32k': 'kimi-k2.6',
+        'kimi-k2.5': 'kimi-k2.6',
       }
       const modelId = oldModels.includes(stored.modelId)
         ? upgradeMap[stored.modelId] || stored.modelId
         : stored.modelId
+      if (modelId !== stored.modelId) saveApiKey(providerId, modelId, stored.apiKey)
       set({
         providerId,
         modelId,
@@ -103,6 +114,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setShowApiKeyDialog: (show) => set({ showApiKeyDialog: show }),
   setShowCustomThemeDialog: (show) => set({ showCustomThemeDialog: show }),
   setShowBalanceAlert: (show, message) => set({ showBalanceAlert: show, balanceAlertMessage: message || '' }),
+  setShowImgbbDialog: (show) => set({ showImgbbDialog: show }),
+
+  loadImgbbConfig: () => {
+    const apiKey = getSecret('imgbb_api_key') || ''
+    const expirationStr = getSecret('imgbb_expiration') || '0'
+    set({ imgbbKey: apiKey, imgbbExpiration: parseInt(expirationStr) || 0 })
+  },
+  saveImgbbConfig: (apiKey, expiration) => {
+    saveSecret('imgbb_api_key', apiKey)
+    saveSecret('imgbb_expiration', String(expiration))
+    set({ imgbbKey: apiKey, imgbbExpiration: expiration })
+  },
 
   getApiKeyConfig: () => {
     const state = get()
@@ -122,6 +145,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
     const kimiKey = getApiKey('moonshot')
     if (kimiKey?.apiKey) {
+      const provider = getProvider('moonshot')
       return { providerId: 'moonshot', modelId: kimiKey.modelId, apiKey: kimiKey.apiKey }
     }
     return get().getApiKeyConfig()
@@ -131,7 +155,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   getVisionConfig: (): ApiKeyConfig | null => {
     const kimiKey = getApiKey('moonshot')
     if (kimiKey?.apiKey) {
-      return { providerId: 'moonshot', modelId: kimiKey.modelId, apiKey: kimiKey.apiKey }
+      const provider = getProvider('moonshot')
+      return { providerId: 'moonshot', modelId: provider?.models.some(m => m.id === kimiKey.modelId) ? kimiKey.modelId : (provider?.models[0]?.id || 'kimi-k2.6'), apiKey: kimiKey.apiKey }
     }
     return get().getApiKeyConfig()
   },

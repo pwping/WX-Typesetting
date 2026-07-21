@@ -36,8 +36,8 @@ export const PROVIDERS: ModelProvider[] = [
     imageFormat: 'image_url',
     models: [
       {
-        id: 'kimi-k2.5',
-        name: 'Kimi K2.5',
+        id: 'kimi-k2.6',
+        name: 'Kimi K2.6',
         maxTokens: 32768,
         supportsVision: true,
         supportsThinking: true,

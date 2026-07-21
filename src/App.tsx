@@ -15,11 +15,13 @@ export default function App() {
   const websiteThemeId = useThemeStore((s) => s.websiteThemeId)
   const loadCustomThemes = useThemeStore((s) => s.loadCustomThemes)
   const loadSettings = useSettingsStore((s) => s.loadSettings)
+  const loadImgbbConfig = useSettingsStore((s) => s.loadImgbbConfig)
 
   useEffect(() => {
     loadCustomThemes()
     loadSettings()
-  }, [loadCustomThemes, loadSettings])
+    loadImgbbConfig()
+  }, [loadCustomThemes, loadSettings, loadImgbbConfig])
 
   useEffect(() => {
     document.documentElement.setAttribute("data-website-theme", websiteThemeId)

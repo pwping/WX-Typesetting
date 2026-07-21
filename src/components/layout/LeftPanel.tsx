@@ -37,6 +37,10 @@ export function LeftPanel() {
   const getHtmlRenderConfig = useSettingsStore((s) => s.getHtmlRenderConfig)
   const setLeftPanelOpen = useEditorStore((s) => s.setLeftPanelOpen)
   const setShowApiKeyDialog = useSettingsStore((s) => s.setShowApiKeyDialog)
+  const imgbbKey = useSettingsStore((s) => s.imgbbKey)
+  const showImgbbDialog = useSettingsStore((s) => s.showImgbbDialog)
+  const setShowImgbbDialog = useSettingsStore((s) => s.setShowImgbbDialog)
+
 
   const [prompt, setPrompt] = useState(() => localStorage.getItem('gzh_prompt_draft') || "")
   const [generating, setGenerating] = useState(false)
@@ -189,11 +193,20 @@ export function LeftPanel() {
           文案内容
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-app-text-tertiary">
-            {richTextHtml ? `${countChars(richTextHtml)} 字` : '编辑原文'}
-          </span>
-          <button
-            onClick={() => setLeftPanelOpen(false)}
+           <span className="text-[10px] text-app-text-tertiary">
+             {richTextHtml ? `${countChars(richTextHtml)} 字` : '编辑原文'}
+           </span>
+           <button
+             onClick={() => setShowImgbbDialog(true)}
+             className={`flex h-6 items-center rounded-md border px-1.5 text-[9px] font-medium transition ${
+               imgbbKey ? 'border-app-accent/30 bg-app-accent-light text-app-accent' : 'border-app-border text-app-text-tertiary hover:bg-app-hover'
+             }`}
+             title="图床配置"
+           >
+             图床API
+           </button>
+           <button
+             onClick={() => setLeftPanelOpen(false)}
             className="flex h-6 w-6 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-text-tertiary transition hover:bg-app-hover hover:text-app-text"
             title="收起左侧面板"
           >
@@ -276,6 +289,109 @@ export function LeftPanel() {
               </svg>
             )}
           </button>
+        </div>
+      </div>
+
+      {showImgbbDialog && <ImgbbDialog />}
+    </div>
+  )
+}
+
+/** ImgBB 图床配置弹窗 */
+function ImgbbDialog() {
+  const imgbbKey = useSettingsStore((s) => s.imgbbKey)
+  const saveImgbbConfig = useSettingsStore((s) => s.saveImgbbConfig)
+  const setShowImgbbDialog = useSettingsStore((s) => s.setShowImgbbDialog)
+  const [key, setKey] = useState(imgbbKey)
+  const [showKey, setShowKey] = useState(false)
+  const [expirePreset, setExpirePreset] = useState('')
+  const [customDays, setCustomDays] = useState('')
+
+  const calcExpiration = (): number => {
+    if (expirePreset === 'custom' && customDays) return parseInt(customDays) * 86400
+    if (expirePreset) return parseInt(expirePreset)
+    return 0
+  }
+  const handleSave = () => { saveImgbbConfig(key, calcExpiration()); setShowImgbbDialog(false) }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowImgbbDialog(false)}>
+      <div className="flex w-80 flex-col rounded-2xl bg-app-surface p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-app-text">ImgBB 图床配置</span>
+          <button onClick={() => setShowImgbbDialog(false)} className="flex h-6 w-6 items-center justify-center rounded-md text-app-text-tertiary transition hover:bg-app-hover">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div className="mt-3 rounded-xl border border-app-border bg-app-hover p-3 text-xs leading-relaxed text-app-text-secondary">
+          <p>图片属于您的隐私文件，建议自行注册图床账号来管理图片。</p>
+          <p className="mt-1.5">ImgBB 提供免费图片托管，注册后即可获取 API Key 使用。</p>
+          <a href="https://imgbb.com/" target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 font-medium text-app-accent hover:underline">前往注册 →</a>
+        </div>
+        <div className="mt-4 space-y-3">
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-app-text-secondary">API Key</label>
+            <div className="flex items-center gap-2">
+              <input
+                type={showKey ? 'text' : 'password'}
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder="输入 imgbb API Key"
+                className="flex-1 rounded-lg border border-app-border bg-app-surface px-3 py-2 text-xs text-app-text outline-none transition focus:border-app-accent"
+              />
+              <button
+                onClick={() => setShowKey(!showKey)}
+                className="rounded-lg border border-app-border px-3 py-2 text-xs text-app-text-secondary hover:bg-app-hover"
+              >
+                {showKey ? '隐藏' : '显示'}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-app-text-secondary">过期时间（可选）</label>
+            <div className="flex gap-1.5">
+              {[
+                { label: '6小时', value: '21600' },
+                { label: '1天', value: '86400' },
+                { label: '3天', value: '259200' },
+              ].map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => { setExpirePreset(expirePreset === p.value ? '' : p.value); setCustomDays('') }}
+                  className={`rounded-md border px-2.5 py-1 text-[10px] font-medium transition ${
+                    expirePreset === p.value ? 'border-app-accent bg-app-accent-light text-app-accent' : 'border-app-border text-app-text-secondary hover:bg-app-hover'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-1.5 flex items-center gap-2">
+              <button
+                onClick={() => { setExpirePreset(expirePreset === 'custom' ? '' : 'custom'); if (expirePreset !== 'custom') setCustomDays('') }}
+                className={`rounded-md border px-2.5 py-1 text-[10px] font-medium transition ${
+                  expirePreset === 'custom' ? 'border-app-accent bg-app-accent-light text-app-accent' : 'border-app-border text-app-text-secondary hover:bg-app-hover'
+                }`}
+              >
+                自定义
+              </button>
+              {expirePreset === 'custom' && (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={customDays}
+                    onChange={(e) => setCustomDays(e.target.value.replace(/\D/g, ''))}
+                    placeholder="天内"
+                    className="w-14 rounded-md border border-app-border bg-app-hover px-2 py-1 text-[10px] text-app-text outline-none transition focus:border-app-accent"
+                  />
+                  <span className="text-[10px] text-app-text-tertiary">天</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button onClick={() => setShowImgbbDialog(false)} className="rounded-lg border border-app-border px-4 py-1.5 text-[11px] font-medium text-app-text-secondary transition hover:bg-app-hover">取消</button>
+          <button onClick={handleSave} disabled={!key} className="rounded-lg bg-app-accent px-4 py-1.5 text-[11px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30">保存</button>
         </div>
       </div>
     </div>

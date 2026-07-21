@@ -225,6 +225,7 @@ export function CustomThemeDialog() {
   }
 
   const handleClose = () => {
+    if (abortRef.current) abortRef.current.abort()
     setShow(false)
     resetForm()
   }
