@@ -1,5 +1,8 @@
 import type { Editor } from '@tiptap/react'
 import { useState } from 'react'
+import { uploadImage } from '../../lib/storage/imgUpload'
+import { getSecret } from '../../lib/storage/crypto'
+import { ImgbbPrompt } from './ImgbbPrompt'
 
 interface ToolbarProps {
   editor: Editor
@@ -7,44 +10,15 @@ interface ToolbarProps {
 
 export function Toolbar({ editor }: ToolbarProps) {
   const [uploading, setUploading] = useState(false)
+  const [showImgbbPrompt, setShowImgbbPrompt] = useState(false)
 
-  const uploadAndInsert = async (file: File) => {
-    const raw = localStorage.getItem('gzh_imgbb')
-    if (!raw) { alert('请先点击左侧「图床API」配置 ImgBB Key'); return }
-    let cfg: { apiKey: string; expiration: number }
-    try { cfg = JSON.parse(raw) } catch { alert('图床配置异常，请重新配置'); return }
-    if (!cfg.apiKey) { alert('请先配置 ImgBB API Key'); return }
-
+  const handleFile = (file: File) => {
     setUploading(true)
-    try {
-      const b64 = await new Promise<string>((resolve, reject) => {
-        const r = new FileReader()
-        r.onload = () => resolve((r.result as string).split(',')[1])
-        r.onerror = () => reject(new Error('读取文件失败'))
-        r.readAsDataURL(file)
-      })
-
-      const form = new FormData()
-      form.append('key', cfg.apiKey)
-      form.append('image', b64)
-      if (cfg.expiration > 0) form.append('expiration', String(cfg.expiration))
-
-      const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form })
-      if (!res.ok) {
-        const err = await res.text().catch(() => '')
-        throw new Error(`上传失败 (${res.status}): ${err.slice(0, 100)}`)
-      }
-      const json = await res.json()
-      // 取原图 URL（data.image.url 或 data.url，非 display_url）
-      const url = json?.data?.image?.url || json?.data?.url
-      if (!url) throw new Error('接口未返回图片地址')
-
-      editor.chain().focus().setImage({ src: url }).run()
-    } catch (err: any) {
-      alert('图片上传失败: ' + (err?.message || '未知错误'))
-    } finally {
-      setUploading(false)
-    }
+    uploadImage(
+      file,
+      (url) => { editor.chain().focus().setImage({ src: url }).run() },
+      (msg) => { alert(msg) },
+    ).finally(() => setUploading(false))
   }
 
   const tools: Array<{ icon: string; action: () => void; active?: boolean; title: string }> = [
@@ -61,11 +35,6 @@ export function Toolbar({ editor }: ToolbarProps) {
     { icon: '</>', title: '代码块', action: () => editor.chain().focus().toggleCodeBlock().run(), active: editor.isActive('codeBlock') },
     { icon: '—', title: '分割线', action: () => editor.chain().focus().setHorizontalRule().run() },
     { icon: '🔗', title: '链接', action: () => { const url = window.prompt('输入链接 URL:'); if (url) editor.chain().focus().setLink({ href: url }).run() }, active: editor.isActive('link') },
-    // TODO: 图片上传功能暂不开放
-    // { icon: uploading ? '⏳' : '🖼', title: '上传图片', action: () => {
-    //   const input = document.getElementById('gzh-img-upload') as HTMLInputElement
-    //   input?.click()
-    // } },
   ]
 
   return (
@@ -77,15 +46,40 @@ export function Toolbar({ editor }: ToolbarProps) {
           }`}
         >{tool.icon}</button>
       ))}
+      <span className="mx-1 h-5 w-px bg-app-border" />
+      <button
+        onClick={() => {
+          if (!getSecret('imgbb_api_key')) { setShowImgbbPrompt(true); return }
+          const input = document.getElementById('gzh-img-upload') as HTMLInputElement
+          input?.click()
+        }}
+        disabled={uploading}
+        title="上传图片"
+        className="flex h-7 items-center gap-1 rounded-md border border-app-border bg-app-surface px-2 text-[11px] font-medium text-app-text-secondary transition hover:border-app-accent/30 hover:bg-app-accent-light hover:text-app-accent disabled:opacity-50"
+      >
+        {uploading ? (
+          <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+        )}
+        <span>上传图片</span>
+      </button>
       <div className="ml-auto flex items-center gap-1">
         <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}
           className="flex h-7 items-center rounded px-2 text-[11px] text-app-text-secondary transition hover:bg-app-hover disabled:opacity-30" title="撤销">↶</button>
         <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}
           className="flex h-7 items-center rounded px-2 text-[11px] text-app-text-secondary transition hover:bg-app-hover disabled:opacity-30" title="重做">↷</button>
       </div>
-      {/* TODO: 图片上传功能暂不开放 */}
-      {/* <input id="gzh-img-upload" type="file" accept="image/*" className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndInsert(f) }} /> */}
+      <input id="gzh-img-upload" type="file" accept="image/*" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+      <ImgbbPrompt show={showImgbbPrompt} onClose={() => setShowImgbbPrompt(false)} />
     </div>
   )
 }
