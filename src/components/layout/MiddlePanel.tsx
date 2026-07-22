@@ -7,6 +7,9 @@ import { buildTypesetPrompt } from "../../lib/llm/promptBuilder"
 import { getProvider } from "../../lib/llm/providers"
 import { validateHtml } from "../../lib/validation/htmlValidator"
 import { useHistoryStore } from "../../store/useHistoryStore"
+import { uploadImage } from "../../lib/storage/imgUpload"
+import { getSecret } from "../../lib/storage/crypto"
+import { ImgbbPrompt } from "../editor/ImgbbPrompt"
 import { useEffect, useRef, useState, useCallback } from "react"
 
 export function MiddlePanel() {
@@ -23,6 +26,8 @@ export function MiddlePanel() {
   const getAllThemes = useThemeStore((s) => s.getAllThemes)
   const getHtmlRenderConfig = useSettingsStore((s) => s.getHtmlRenderConfig)
   const [dotCount, setDotCount] = useState(0)
+  const [mdUploading, setMdUploading] = useState(false)
+  const [showMdImgbbPrompt, setShowMdImgbbPrompt] = useState(false)
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const markdownHistory = useRef<string[]>([markdown])
@@ -200,6 +205,29 @@ const handleTypeset = async () => {
     setStreamStatus("idle", "")
   }
 
+  const handleMdUpload = useCallback((file: File) => {
+    setMdUploading(true)
+    uploadImage(
+      file,
+      (url) => {
+        // Markdown 格式插入光标位置，保持滚动位置不变
+        const ta = mdTextareaRef.current
+        if (!ta) return
+        const savedScroll = ta.scrollTop
+        const start = ta.selectionStart
+        const text = markdown
+        const before = text.substring(0, start)
+        const after = text.substring(start)
+        const imgMd = `\n![](${url})\n`
+        const newText = before + imgMd + after
+        const cursorPos = start + imgMd.length
+        setMarkdown(newText)
+        setTimeout(() => { ta.focus(); ta.setSelectionRange(cursorPos, cursorPos); ta.scrollTop = savedScroll }, 0)
+      },
+      (msg) => { alert(msg) },
+    ).finally(() => setMdUploading(false))
+  }, [markdown, setMarkdown])
+
   const insertMarkdown = useCallback((syntax: string, sampleText: string) => {
     const ta = mdTextareaRef.current
     if (!ta) return
@@ -276,6 +304,31 @@ const handleTypeset = async () => {
           <button onClick={() => insertMarkdown("IMG", "图片说明")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="图片">IMG 图片</button>
           <button onClick={() => insertMarkdown("</>", "代码示例")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="代码块">&lt;/&gt; 代码</button>
           <button onClick={() => insertMarkdown("---", "")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="分割线">--- 分割线</button>
+          <button
+            onClick={() => {
+              if (!getSecret('imgbb_api_key')) { setShowMdImgbbPrompt(true); return }
+              ;(document.getElementById('gzh-md-img-upload') as HTMLInputElement)?.click()
+            }}
+            disabled={mdUploading}
+            title="上传图片"
+            className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-medium text-app-text-secondary transition hover:border-app-accent/30 hover:bg-app-accent-light hover:text-app-accent disabled:opacity-50"
+          >
+            {mdUploading ? (
+              <svg className="inline h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg className="inline h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+            )}
+            {" "}上传图片
+          </button>
+          <input id="gzh-md-img-upload" type="file" accept="image/*" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleMdUpload(f); e.target.value = '' } }} />
         </div>
       </div>
       <div className="flex-1 overflow-hidden">
@@ -321,6 +374,7 @@ const handleTypeset = async () => {
           <p className="mt-1.5 text-[10px] text-red-500">{streamProgress}</p>
         )}
       </div>
+      <ImgbbPrompt show={showMdImgbbPrompt} onClose={() => setShowMdImgbbPrompt(false)} />
     </div>
   )
 }

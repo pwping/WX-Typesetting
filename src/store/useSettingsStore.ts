@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { ApiKeyConfig } from '../types'
-import { getApiKey, getSelectedProvider, setSelectedProvider, saveApiKey, deleteApiKey, saveSecret, getSecret } from '../lib/storage/crypto'
+import { getApiKey, getSelectedProvider, setSelectedProvider, saveApiKey, deleteApiKey, saveSecret, getSecret, deleteSecret } from '../lib/storage/crypto'
 import { getProvider } from '../lib/llm/providers'
 
 interface SettingsState {
@@ -29,6 +29,7 @@ interface SettingsState {
   getVisionConfig: () => ApiKeyConfig | null
   loadImgbbConfig: () => void
   saveImgbbConfig: (apiKey: string, expiration: number) => void
+  clearImgbbConfig: () => void
   setShowImgbbDialog: (show: boolean) => void
 }
 
@@ -125,6 +126,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     saveSecret('imgbb_api_key', apiKey)
     saveSecret('imgbb_expiration', String(expiration))
     set({ imgbbKey: apiKey, imgbbExpiration: expiration })
+  },
+  clearImgbbConfig: () => {
+    deleteSecret('imgbb_api_key')
+    deleteSecret('imgbb_expiration')
+    set({ imgbbKey: '', imgbbExpiration: 0 })
   },
 
   getApiKeyConfig: () => {

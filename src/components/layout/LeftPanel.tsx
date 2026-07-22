@@ -193,9 +193,6 @@ export function LeftPanel() {
           文案内容
         </span>
         <div className="flex items-center gap-2">
-           <span className="text-[10px] text-app-text-tertiary">
-             {richTextHtml ? `${countChars(richTextHtml)} 字` : '编辑原文'}
-           </span>
            <button
              onClick={() => setShowImgbbDialog(true)}
              className={`flex h-6 items-center rounded-md border px-1.5 text-[9px] font-medium transition ${
@@ -203,8 +200,11 @@ export function LeftPanel() {
              }`}
              title="图床配置"
            >
-             图床API
+             {imgbbKey ? '已配置图片API' : '配置图床API'}
            </button>
+           <span className="ml-0.5 text-[10px] text-app-text-tertiary">
+             {richTextHtml ? `${countChars(richTextHtml)} 字` : '编辑原文'}
+           </span>
            <button
              onClick={() => setLeftPanelOpen(false)}
             className="flex h-6 w-6 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-text-tertiary transition hover:bg-app-hover hover:text-app-text"
@@ -301,6 +301,7 @@ export function LeftPanel() {
 function ImgbbDialog() {
   const imgbbKey = useSettingsStore((s) => s.imgbbKey)
   const saveImgbbConfig = useSettingsStore((s) => s.saveImgbbConfig)
+  const clearImgbbConfig = useSettingsStore((s) => s.clearImgbbConfig)
   const setShowImgbbDialog = useSettingsStore((s) => s.setShowImgbbDialog)
   const [key, setKey] = useState(imgbbKey)
   const [showKey, setShowKey] = useState(false)
@@ -312,7 +313,10 @@ function ImgbbDialog() {
     if (expirePreset) return parseInt(expirePreset)
     return 0
   }
-  const handleSave = () => { saveImgbbConfig(key, calcExpiration()); setShowImgbbDialog(false) }
+  const handleSave = () => {
+    if (!key.trim()) { clearImgbbConfig() } else { saveImgbbConfig(key, calcExpiration()) }
+    setShowImgbbDialog(false)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowImgbbDialog(false)}>
@@ -348,7 +352,7 @@ function ImgbbDialog() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-medium text-app-text-secondary">过期时间（可选）</label>
+            <label className="mb-1 block text-[11px] font-medium text-app-text-secondary">过去时长，默认无限时长(可选)</label>
             <div className="flex gap-1.5">
               {[
                 { label: '6小时', value: '21600' },
@@ -383,7 +387,7 @@ function ImgbbDialog() {
                     placeholder="天内"
                     className="w-14 rounded-md border border-app-border bg-app-hover px-2 py-1 text-[10px] text-app-text outline-none transition focus:border-app-accent"
                   />
-                  <span className="text-[10px] text-app-text-tertiary">天</span>
+                  <span className="ml-0.5 text-[10px] text-app-text-tertiary">天</span>
                 </div>
               )}
             </div>
@@ -391,7 +395,7 @@ function ImgbbDialog() {
         </div>
         <div className="mt-5 flex items-center justify-end gap-2">
           <button onClick={() => setShowImgbbDialog(false)} className="rounded-lg border border-app-border px-4 py-1.5 text-[11px] font-medium text-app-text-secondary transition hover:bg-app-hover">取消</button>
-          <button onClick={handleSave} disabled={!key} className="rounded-lg bg-app-accent px-4 py-1.5 text-[11px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30">保存</button>
+          <button onClick={handleSave} className="rounded-lg bg-app-accent px-4 py-1.5 text-[11px] font-semibold text-white transition hover:opacity-90">保存</button>
         </div>
       </div>
     </div>
