@@ -31,6 +31,7 @@
 - **🎨 6 套内置排版主题**：摸鱼绿、红白色系、石墨极简风、留白禅意风、摸鱼票据风、橄榄手记，覆盖深度分析、教程、创意评测等多种题材
 - **🧠 AI 驱动排版**：接入 DeepSeek / Kimi 大模型，根据选中的主题组件库将 Markdown 转换为精美的公众号 HTML
 - **🎛️ 自定义主题生成**：通过**文字描述或上传参考图**，AI 自动生成专属主题组件库并保存到本地复用
+- **🖼️ 图床上传**：内置 ImgBB 图床接入，富文本 / Markdown 双编辑器均支持上传本地图片，自动生成图片链接插入光标处
 - **📝 富文本 + Markdown 双编辑器**：左侧 Tiptap 富文本编辑（支持 AI 文案生成，可收起扩大中间区域），中间 Markdown 编辑（18 种快捷语法按钮）
 - **👁️ 实时预览**：排版结果在右侧面板实时流式展示，所见即所得
 - **📋 一键复制**：生成结果可通过 Clipboard API 一键复制，直接粘贴到公众号编辑器
@@ -58,14 +59,14 @@
   <img src="./public/images/6.jpg" alt="橄榄手记" width="800" />
   <br/>
   <em>橄榄手记</em>
+</p>
+
 <p align="center">
   <img src="./public/images/7.png" width="260" style="margin:0 6px" />
   <img src="./public/images/8.png" width="260" style="margin:0 6px" />
   <img src="./public/images/9.png" width="260" style="margin:0 6px" />
   <br/>
   <em>石墨极简风、留白禅意风、摸鱼票据风</em>
-</p>
-
 </p>
 
 
@@ -80,6 +81,8 @@
 | Tiptap 3 | 富文本编辑器 |
 | Dexie.js 4 | IndexedDB 本地数据库 |
 | Turndown 7 | HTML → Markdown 转换 |
+| markdown-it | Markdown → HTML 渲染 |
+| modern-screenshot | 预览截图导出 |
 | CryptoJS 4 | API Key 加密存储 |
 
 ## 🚀 快速开始
@@ -119,8 +122,6 @@ npm run dev
   <em>Cookie选项不要选择</em>
 </p>
 
-   
-
 > 💡 **推荐配置**：
 > - **排版渲染**：DeepSeek V4 Flash（便宜快速，适合文章排版）
 > - **图片识别 / 自定义主题参考图**：Kimi K2.5（支持视觉识图）
@@ -133,7 +134,9 @@ wx-typeseting/
 │   ├── SKILL.md                #   AI 排版核心 Skill 指令
 │   ├── theme-index.md          #   主题索引与选择决策表
 │   ├── theme-generator.md      #   自定义主题生成器规则
-│   ├── common-components.md    #   通用组件库（代码块/图片/标签标题）
+│   ├── common-components.md    #   通用组件库（代码块/图片/标签标题/占位板块）
+│   ├── format-normalize.md     #   格式归一化（Word/PDF/网页 → Markdown）
+│   ├── eval-cases.md           #   主题效果校验用例
 │   ├── theme-moyu-green.md     #   摸鱼绿主题组件库
 │   ├── theme-red-white.md      #   红白色系主题组件库
 │   ├── theme-graphite-minimal.md #  石墨极简风主题组件库
@@ -143,18 +146,19 @@ wx-typeseting/
 ├── src/
 │   ├── components/
 │   │   ├── layout/             #   布局组件（TopBar / LeftPanel / MiddlePanel / RightPanel）
-│   │   ├── editor/             #   编辑器组件（RichTextEditor / MarkdownEditor / Toolbar）
+│   │   ├── editor/             #   编辑器组件（RichTextEditor / MarkdownEditor / Toolbar / ImgbbPrompt）
 │   │   └── topbar/             #   顶栏弹出组件（ApiKeyDialog / CustomThemeDialog / HistoryDialog / BalanceAlert）
 │   ├── store/                  #   Zustand 状态管理（editor / theme / settings / history）
 │   ├── lib/
 │   │   ├── llm/                #   LLM 客户端（providers / client / promptBuilder）
-│   │   ├── storage/            #   本地存储（IndexedDB / AES 加密 / 文章/主题/历史 CRUD）
+│   │   ├── storage/            #   本地存储（IndexedDB / AES 加密 / 文章/主题/历史 CRUD / 图床上传）
 │   │   ├── themes/             #   主题加载与缓存
 │   │   ├── validation/         #   微信合规校验 / CSS 净化
 │   │   ├── clipboard/          #   剪贴板 API / 文件下载
 │   │   └── markdown/           #   HTML ↔ Markdown 双向转换
 │   ├── styles/                 #   全局样式 + 6 套 UI 换肤主题
 │   └── types/                  #   TypeScript 类型定义
+├── scripts/                    #   辅助脚本（docx 提取、HTML 校验等）
 ├── index.html
 ├── vite.config.ts
 ├── tailwind.config.js
@@ -191,6 +195,18 @@ wx-typeseting/
 - AI 流式生成文章 HTML
 - 生成结果自动填入左侧编辑器
 
+### 图床配置与上传
+
+1. 点击左侧面板底部 **配置图床API** 按钮（已配置后显示「已配置图片API」）
+2. 注册 [ImgBB](https://imgbb.com/) 获取免费 API Key 并填入
+3. 可选设置图片过期时长（6 小时 / 1 天 / 3 天 / 自定义天数，默认无限时长）
+4. 之后点击编辑器工具栏的**图片**按钮即可上传本地图片：
+   - **富文本模式**：上传成功后图片直接插入编辑器
+   - **Markdown 模式**：自动在光标处插入 `![](图片链接)` 语法
+5. 图片上传到 ImgBB 图床，链接为原图直链，可直接用于公众号文章
+
+> 图片属于您的隐私文件，建议自行注册图床账号来管理图片。
+
 ### 自定义主题
 
 1. 点击顶部 **➕ 自定义主题**
@@ -205,15 +221,13 @@ wx-typeseting/
 
 中间面板支持 18 种快捷语法按钮：标题 H1-H3 / 粗体 / 斜体 / 高亮 / 下划线 / 删除线 / 链接 / 引用 / 列表 / 代码 / 图片 / 分割线 / 表格 等。
 
-支持图片占位符：`【插入图片】` → 自动渲染为居中待补素材占位板块。
-
 ## 🛡️ 数据隐私（所有数据存本地）
 
 - ✅ 所有文章数据存储在本地 IndexedDB
 - ✅ 排版历史存储在本地 IndexedDB
 - ✅ 自定义主题存储在本地 IndexedDB
-- ✅ API Key 使用 AES（PBKDF2 + 浏览器指纹 + 随机盐）加密后存储在 localStorage
-- ✅ **不上传任何数据到服务器**
+- ✅ API Key / 图床 Key 使用 AES（PBKDF2 + 浏览器指纹 + 随机盐）加密后存储在 localStorage
+- ✅ **不上传任何数据到服务器**（文章内容本地处理；仅图片上传至您自行配置的 ImgBB 图床）
 
 ## 📦 构建部署
 
@@ -226,7 +240,6 @@ npm run preview
 ```
 
 构建产物在 `dist/` 目录，可直接部署到任何静态文件服务器。
-
 
 
 
@@ -250,4 +263,3 @@ npm run preview
 2、衍生品必须开源 — 任何修改版本、Fork、二次分发，必须以 AGPL-3.0（或兼容协议）公开发布，提供完整源代码
 3、网络服务也要开源 — 即使只是把修改版本部署成 SaaS / Web 服务给别人用而不分发代码，也要公开源代码（这是 AGPL 区别于 GPL 的核心）
 4、不允许闭源、专有化、仅付费分发
-
