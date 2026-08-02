@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useSettingsStore } from "../../store/useSettingsStore"
 import { useThemeStore } from "../../store/useThemeStore"
 import { streamChat, estimateTokens } from "../../lib/llm/client"
@@ -32,18 +32,58 @@ export function CustomThemeDialog() {
   const [progress, setProgress] = useState("")
   const [stepLabel, setStepLabel] = useState("")
   const [generatedHtml, setGeneratedHtml] = useState("")
+  const [previewSrcDoc, setPreviewSrcDoc] = useState("")
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const previewIframeRef = useRef<HTMLIFrameElement>(null)
+  const previewTimerRef = useRef<number | null>(null)
+  const previewLastTsRef = useRef(0)
 
-  // 预览内容更新时自动滚动到底部
+  // 节流 + 尾随防抖更新预览：
+  // 纯 debounce 在快速流式下会被无限重置，导致预览长时间空白；
+  // 这里保证至少每 delay ms 刷新一次，流式停顿后也补一次最终态。
+  const schedulePreviewUpdate = (html: string, delay = 200) => {
+    const now = Date.now()
+    const elapsed = now - previewLastTsRef.current
+    if (previewLastTsRef.current === 0 || elapsed >= delay) {
+      previewLastTsRef.current = now
+      if (previewTimerRef.current) {
+        window.clearTimeout(previewTimerRef.current)
+        previewTimerRef.current = null
+      }
+      setPreviewSrcDoc(extractThemePreviewHtml(html))
+    } else {
+      if (previewTimerRef.current) {
+        window.clearTimeout(previewTimerRef.current)
+      }
+      previewTimerRef.current = window.setTimeout(() => {
+        previewLastTsRef.current = Date.now()
+        setPreviewSrcDoc(extractThemePreviewHtml(html))
+      }, delay - elapsed)
+    }
+  }
+
+  // 预览内容更新时自动滚动到底部（流式输出时实时跟踪最新内容）
   const handlePreviewLoad = () => {
     const iframe = previewIframeRef.current
     if (iframe?.contentWindow) {
       iframe.contentWindow.scrollTo(0, iframe.contentWindow.document.body.scrollHeight)
     }
   }
+
+  // 预览刷新时滚动 iframe 到底部
+  useEffect(() => {
+    const iframe = previewIframeRef.current
+    if (iframe?.contentWindow) {
+      // 用 requestAnimationFrame 确保 iframe DOM 已渲染
+      requestAnimationFrame(() => {
+        try {
+          iframe.contentWindow?.scrollTo(0, iframe.contentWindow.document.body.scrollHeight)
+        } catch { /* iframe 可能还在加载 */ }
+      })
+    }
+  }, [previewSrcDoc])
 
   if (!show) return null
   const hasAnyKey = !!(useSettingsStore.getState().getHtmlRenderConfig() || useSettingsStore.getState().getVisionConfig())
@@ -54,6 +94,42 @@ export function CustomThemeDialog() {
     tab === "image" ? !!imageBase64 : prompt.trim().length > 0
   )
 
+  // 压缩参考图：视觉模型只需识别配色/风格，不需要原图尺寸
+  // 原图(最大4MB) base64 后约 5.3MB，直接发送上传慢、视觉模型处理也慢
+  // 压缩到最长边 1024px、JPEG 质量 0.8 后通常只有 100-300KB，大幅提速
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = () => reject(new Error("读取图片失败"))
+      reader.onload = () => {
+        const img = new Image()
+        img.onerror = () => reject(new Error("解析图片失败"))
+        img.onload = () => {
+          const MAX_EDGE = 1024
+          let { width, height } = img
+          const scale = Math.min(1, MAX_EDGE / Math.max(width, height))
+          if (scale >= 1 && file.size <= 300 * 1024) {
+            // 小图直接用原图，避免无谓压缩
+            resolve(reader.result as string)
+            return
+          }
+          const canvas = document.createElement("canvas")
+          canvas.width = Math.max(1, Math.round(width * scale))
+          canvas.height = Math.max(1, Math.round(height * scale))
+          const ctx = canvas.getContext("2d")
+          if (!ctx) {
+            resolve(reader.result as string)
+            return
+          }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          resolve(canvas.toDataURL("image/jpeg", 0.8))
+        }
+        img.src = reader.result as string
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -61,13 +137,13 @@ export function CustomThemeDialog() {
       setError("图片文件大小不能超过4MB")
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      setImageBase64(reader.result as string)
-      setImageName(file.name)
-      setError("")
-    }
-    reader.readAsDataURL(file)
+    compressImage(file)
+      .then((dataUrl) => {
+        setImageBase64(dataUrl)
+        setImageName(file.name)
+        setError("")
+      })
+      .catch(() => setError("图片处理失败，请换一张试试"))
   }
 
   /** AI 分析描述 → 提取全部主题参数 */
@@ -109,7 +185,7 @@ export function CustomThemeDialog() {
     const genParams: CustomThemeParams = tab === "image"
       ? {
           name: imgThemeName || "",
-          color: imgThemeColor || "#6366f1",
+          color: imgThemeColor || "",
           scene: imgThemeScene || "",
           description: imgDescription || "",
           referenceImageBase64: imageBase64,
@@ -136,6 +212,10 @@ export function CustomThemeDialog() {
       abortRef.current = controller
 
       let fullHtml = ""
+      // 元信息提取缓存：已提取到的字段不再重复匹配（避免每次 token 都对全文跑 6 个正则）
+      let metaName = ""
+      let metaColor = ""
+      let metaScene = ""
       await streamChat(
         provider,
         renderConfig,
@@ -145,14 +225,22 @@ export function CustomThemeDialog() {
             fullHtml += token
             setProgress(`生成中... ${fullHtml.length} 字符`)
             setGeneratedHtml(fullHtml)
-            // 实时提取模型生成的主题元信息（名称、颜色、场景）
-            if (tab === "image") {
-              const nm = fullHtml.match(/<!--\s*theme:\s*(.+?)\s*-->/)
-              if (nm && nm[1].trim()) setImgThemeName(nm[1].trim())
-              const cm = fullHtml.match(/<!--\s*color:\s*(.+?)\s*-->/)
-              if (cm && cm[1].trim()) setImgThemeColor(cm[1].trim())
-              const sm = fullHtml.match(/<!--\s*scene:\s*(.+?)\s*-->/)
-              if (sm && sm[1].trim()) setImgThemeScene(sm[1].trim())
+            // 预览节流更新（200ms 一次），避免 iframe 全量重载卡死主线程
+            schedulePreviewUpdate(fullHtml)
+            // 实时提取模型生成的主题元信息（只在开头提取一次，提取到后跳过）
+            // theme-generator.md 输出格式：<!-- THEME-NAME: xxx --><!-- THEME-COLOR: #xxx --><!-- THEME-SCENE: xxx -->
+            // 同时兼容旧的小写格式 <!-- theme: xxx --><!-- color: #xxx -->
+            if (!metaName) {
+              const nm = fullHtml.match(/<!--\s*THEME-NAME:\s*(.+?)\s*-->/i) || fullHtml.match(/<!--\s*theme:\s*(.+?)\s*-->/i)
+              if (nm && nm[1].trim()) { metaName = nm[1].trim(); setImgThemeName(metaName) }
+            }
+            if (!metaColor) {
+              const cm = fullHtml.match(/<!--\s*THEME-COLOR:\s*(.+?)\s*-->/i) || fullHtml.match(/<!--\s*color:\s*(.+?)\s*-->/i)
+              if (cm && cm[1].trim()) { metaColor = cm[1].trim(); setImgThemeColor(metaColor) }
+            }
+            if (!metaScene) {
+              const sm = fullHtml.match(/<!--\s*THEME-SCENE-TAGS:\s*(.+?)\s*-->/i) || fullHtml.match(/<!--\s*scene:\s*(.+?)\s*-->/i)
+              if (sm && sm[1].trim()) { metaScene = sm[1].trim(); setImgThemeScene(metaScene) }
             }
           },
           onDone: (finalHtml) => {
@@ -166,6 +254,11 @@ export function CustomThemeDialog() {
                 match.includes('white-space:nowrap') ? match : match.replace('scroll', 'scroll;white-space:nowrap')
               )
             setGeneratedHtml(clean)
+            // 完成时立即刷新最终预览（不等防抖）
+            if (previewTimerRef.current) {
+              window.clearTimeout(previewTimerRef.current)
+            }
+            setPreviewSrcDoc(extractThemePreviewHtml(clean, { isFinal: true }))
             setStatus("done")
             setProgress(`完成 · ${clean.length} 字符`)
           },
@@ -193,24 +286,42 @@ export function CustomThemeDialog() {
     if (!generatedHtml) return
 
     // 从 LLM 生成的注释提取主题元信息（<!-- theme: xxx --><!-- color: #xxx -->...）
+    // theme-generator.md 的生成提示词输出本身不含 <span leaf="">——按 skill 规范，leaf 包裹在"转换为标准主题库"阶段补
+    // 这里 Web 项目直接把生成结果存为 componentLibrary，所以保存前自动补 <span leaf=""> 包裹
+
     const extractComment = (p: RegExp): string => { const m = generatedHtml.match(p); return m ? m[1].trim() : "" }
 
-    let savedName = tab === "image" ? imgThemeName.trim() : extractComment(/<!--\s*theme:\s*(.+?)\s*-->/i)
-    let savedColor = tab === "image" ? (imgThemeColor || "#6366f1") : (extractComment(/<!--\s*color:\s*(.+?)\s*-->/i) || "#6366f1")
-    let savedScene = tab === "image" ? (imgThemeScene.trim() || "自定义风格") : (extractComment(/<!--\s*scene:\s*(.+?)\s*-->/i) || "自定义风格")
-    let savedDesc = tab === "image" ? (imgDescription.trim()) : extractComment(/<!--\s*desc:\s*(.+?)\s*-->/i)
+    // theme-generator.md 输出格式：<!-- THEME-NAME --><!-- THEME-COLOR --><!-- THEME-SCENE-TAGS -->
+    // 同时兼容旧的小写格式
+    const savedName = extractComment(/<!--\s*THEME-NAME:\s*(.+?)\s*-->/i) || extractComment(/<!--\s*theme:\s*(.+?)\s*-->/i)
+      || `自定义主题_${Date.now().toString(36).slice(-4)}`
+    const savedColor = extractComment(/<!--\s*THEME-COLOR:\s*(.+?)\s*-->/i) || extractComment(/<!--\s*color:\s*(.+?)\s*-->/i) || "#6366f1"
+    const savedScene = extractComment(/<!--\s*THEME-SCENE-TAGS:\s*(.+?)\s*-->/i) || extractComment(/<!--\s*scene:\s*(.+?)\s*-->/i) || "自定义风格"
+    const savedDesc = extractComment(/<!--\s*THEME-DESCRIPTION:\s*(.+?)\s*-->/i) || extractComment(/<!--\s*desc:\s*(.+?)\s*-->/i)
 
-    if (tab === "image") {
-      // 图片模式下对缺失值做额外兜底补全
-      if (!savedName) savedName = imageName.replace(/\.[^.]+$/, "") || "自定义主题"
-      if (!imgThemeColor) savedColor = savedColor || "#6366f1"
-      if (!imgThemeScene.trim()) savedScene = savedScene || "自定义风格"
-      if (!savedDesc) savedDesc = imageName || ""
-    }
+    // 补 <span leaf=""> 包裹：只处理 ```html 代码块内的 HTML
+    // 1. 提取所有 ```html 代码块
+    // 2. 对每个代码块补 leaf：把文字节点（有内容的）用 <span leaf=""> 包裹
+    // 3. 装饰性空元素内部补 <span leaf=""><br></span>
+    const codeBlockRegex = /```html\s*\n([\s\S]*?)```/g
+    const safeHtml = generatedHtml.replace(codeBlockRegex, (_, html: string) => {
+      let patched = html
+      // 装饰性空元素（<span ...></span> 内部无内容）补 <span leaf=""><br></span>
+      patched = patched.replace(/(<span[^>]*>)\s*(<\/span>)/g, '$1<span leaf=""><br></span>$2')
+      // 文字节点：把 <span style="..." >文字</span> 里的「文字」用 <span leaf=""> 包起来
+      // 已经有 <span leaf=""> 的不重复包
+      patched = patched.replace(/(<span[^>]*>)\s*((?!<span leaf)[^<][^<]*?)\s*(<\/span>)/g,
+        (_, open: string, text: string, close: string) => `${open}<span leaf="">${text}</span>${close}`)
+      // <p>文字</p> → <p><span leaf="">文字</span></p>
+      patched = patched.replace(/(<p[^>]*>)\s*((?!<span leaf)[^<][^<]*?)\s*(<\/p>)/g,
+        (_, open: string, text: string, close: string) => `${open}<span leaf="">${text}</span>${close}`)
+      // 去掉微信不支持的 position 值
+      patched = patched.replace(/position\s*:\s*(fixed|absolute|sticky)\s*;?/gi, "")
+      return "```html\n" + patched + "```"
+    })
 
-    const safeHtml = generatedHtml.replace(/position\s*:\s*(fixed|absolute|sticky)\s*;?/gi, "")
     const savedTheme = await saveCustomTheme({
-      name: savedName || `自定义主题_${Date.now().toString(36).slice(-4)}`,
+      name: savedName,
       color: savedColor,
       scene: savedScene,
       underlineCss: `border-bottom:2px solid ${savedColor};font-weight:600;`,
@@ -231,6 +342,10 @@ export function CustomThemeDialog() {
   }
 
   const resetForm = () => {
+    if (previewTimerRef.current) {
+      window.clearTimeout(previewTimerRef.current)
+      previewTimerRef.current = null
+    }
     setTab("text")
     setPrompt("")
     setImageBase64(undefined)
@@ -240,6 +355,7 @@ export function CustomThemeDialog() {
     setImgThemeScene("")
     setImgDescription("")
     setGeneratedHtml("")
+    setPreviewSrcDoc("")
     setStatus("idle")
     setProgress("")
     setStepLabel("")
@@ -337,7 +453,7 @@ export function CustomThemeDialog() {
               {generatedHtml && (
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-app-text-secondary">生成预览</label>
-                  <iframe ref={previewIframeRef} srcDoc={extractThemePreviewHtml(generatedHtml)} className="h-[300px] w-full rounded-lg border border-app-border bg-white" title="主题预览" onLoad={handlePreviewLoad} />
+                  <iframe ref={previewIframeRef} srcDoc={previewSrcDoc} className="h-[300px] w-full rounded-lg border border-app-border bg-white" title="主题预览" onLoad={handlePreviewLoad} />
                 </div>
               )}
             </div>
@@ -366,7 +482,7 @@ export function CustomThemeDialog() {
               {generatedHtml && (
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-app-text-secondary">生成预览</label>
-                  <iframe ref={previewIframeRef} srcDoc={extractThemePreviewHtml(generatedHtml)} className="h-[300px] w-full rounded-lg border border-app-border bg-white" title="主题预览" onLoad={handlePreviewLoad} />
+                  <iframe ref={previewIframeRef} srcDoc={previewSrcDoc} className="h-[300px] w-full rounded-lg border border-app-border bg-white" title="主题预览" onLoad={handlePreviewLoad} />
                 </div>
               )}
             </div>

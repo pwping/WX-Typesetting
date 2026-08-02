@@ -153,7 +153,7 @@ const handleTypeset = async () => {
             setGeneratedHtml(fullHtml)
           },
           onDone: (finalHtml, finishReason) => {
-            const cleanHtml = ensureTrailingLineBreak(ensureSpanLeaf(removeUnsupportedWechatCss(fixHalfWidthPunctuation(replaceDatePlaceholders(extractHtml(replaceDivWithSection(finalHtml)))))))
+            const cleanHtml = ensureTrailingLineBreak(ensureSpanLeaf(removeUnsupportedWechatCss(fixHalfWidthPunctuation(replaceDatePlaceholders(stripOpeningChitchat(extractHtml(replaceDivWithSection(finalHtml))))))))
             setGeneratedHtml(cleanHtml)
 
             const result = validateHtml(cleanHtml)
@@ -379,33 +379,57 @@ const handleTypeset = async () => {
   )
 }
 
+/** 裁剪 HTML 字符串，只保留第一个真实标签到最后一个闭合标签之间的内容，
+ *  同时剥离 HTML 注释（元信息等，程序内部解析用，不显示在最终渲染里） */
+function stripNonHtmlEdges(html: string): string {
+  let clean = html.replace(/<!--[\s\S]*?-->/g, '').trim()
+  const firstTagIdx = clean.search(/<[a-zA-Z][^>]*>/)
+  if (firstTagIdx === -1) return clean
+  const lastClose = clean.match(/<\/[a-zA-Z][^>]*>\s*$/)
+  const endIdx = lastClose ? (lastClose.index ?? 0) + lastClose[0].length : clean.lastIndexOf('>')
+  if (endIdx <= firstTagIdx) return clean
+  return clean.substring(firstTagIdx, endIdx).trim()
+}
+
 function extractHtml(text: string): string {
   let cleaned = text.trim()
   if (!cleaned) return ''
 
-  const firstFence = cleaned.indexOf("```")
-  const lastFence = cleaned.lastIndexOf("```")
-
-  if (firstFence !== -1) {
-    if (firstFence === lastFence) {
-      cleaned = cleaned.substring(lastFence + 3).trim()
-    } else {
-      cleaned = cleaned.substring(firstFence + 3, lastFence).trim()
+  // 优先收集所有 ```html 代码块：模型常把说明文字放在围栏外，
+  // 只取围栏内的 HTML，避免开头/结尾混入"提示词/思考内容"
+  const htmlFences: string[] = []
+  const fenceRe = /```html\s*\n?([\s\S]*?)```/gi
+  let m: RegExpExecArray | null
+  while ((m = fenceRe.exec(cleaned)) !== null) {
+    const c = m[1].trim()
+    if (c) htmlFences.push(c)
+  }
+  if (htmlFences.length > 0) {
+    cleaned = htmlFences.join('\n\n')
+  } else {
+    const firstFence = cleaned.indexOf("```")
+    const lastFence = cleaned.lastIndexOf("```")
+    if (firstFence !== -1) {
+      if (firstFence === lastFence) {
+        cleaned = cleaned.substring(lastFence + 3).trim()
+      } else {
+        cleaned = cleaned.substring(firstFence + 3, lastFence).trim()
+      }
+      cleaned = cleaned.replace(/^[a-zA-Z#]+\n?/, '').trim()
     }
-    cleaned = cleaned.replace(/^[a-zA-Z#]+\n?/, '').trim()
   }
 
   const bodyMatch = cleaned.match(/<body[^>]*>([\s\S]*)<\/body>/i)
-  if (bodyMatch) return bodyMatch[1].trim()
+  if (bodyMatch) return stripNonHtmlEdges(bodyMatch[1].trim())
 
   const firstSection = cleaned.indexOf('<section')
   const lastSectionEnd = cleaned.lastIndexOf('</section>')
   if (firstSection !== -1 && lastSectionEnd !== -1) {
-    return cleaned.substring(firstSection, lastSectionEnd + '</section>'.length)
+    return stripNonHtmlEdges(cleaned.substring(firstSection, lastSectionEnd + '</section>'.length))
   }
 
   if (/<[\w]+[^>]*>/.test(cleaned)) {
-    return cleaned
+    return stripNonHtmlEdges(cleaned)
   }
 
   return cleaned
@@ -440,7 +464,13 @@ function removeUnsupportedWechatCss(html: string): string {
   return html
     .replace(/\sid\s*=\s*["'][^"']*["']/gi, '')
     .replace(/\sclass\s*=\s*["'][^"']*["']/gi, '')
-    .replace(/position\s*:\s*(fixed|absolute|sticky)\s*;?/gi, '')
+    // position:absolute 常被模型用来做"卡片左侧序号/角标"（如 <span style="left:16px;top:16px;width:24px;…">）。
+    // 微信不支持定位，删掉 position 后若直接变 inline，width/height 失效会导致序号"变扁、换行"。
+    // 兜底：删除定位的同时补 display:inline-block，保证圆点尺寸生效、不扁且微信兼容
+    .replace(/(style="[^"]*?)position\s*:\s*absolute\s*;?/gi, (m, prefix: string) =>
+      prefix + (/(?:^|;)\s*(left|top|width|height)\s*:/.test(prefix) ? 'display:inline-block;' : '')
+    )
+    .replace(/position\s*:\s*(fixed|sticky)\s*;?/gi, '')
     .replace(/float\s*:\s*(left|right|none|inline-start|inline-end)\s*;?/gi, '')
     .replace(/overflow-x:\s*auto;?/gi, '')
     .replace(/overflow-y:\s*auto;?/gi, '')
@@ -449,6 +479,71 @@ function removeUnsupportedWechatCss(html: string): string {
     .replace(/overflow-x:\s*scroll;?/gi, (match) =>
       match.includes('white-space:nowrap') ? match : match.replace('scroll', 'scroll;white-space:nowrap')
     )
+}
+
+/** 模型可能输出的寒暄/说明性开场白，识别后整段剥离（面向用户的操作提示，不属于正文） */
+const CHITCHAT_OPENERS = /^(好的|好嘞|收到|没问题|可以，|我来帮你|我帮你|让我来|让我帮你|我来|我将|我这就|以下是根据|以下为|以下是|下面是根据|这是根据|这是排版|根据你的|根据您|已为你|为你排版|正在为你|现在开始)/
+const CHITCHAT_TASKS = /(排版|渲染|生成|转换|HTML|公众号|样式|主题)/
+/** 结尾的说明性收尾语，同样剥离 */
+const CHITCHAT_CLOSERS = /^(以上就是|以上是|以上为|希望你喜欢|希望有帮助|如果觉得有用|如果对你有|谢谢阅读|感谢阅读|欢迎点赞|欢迎关注)/
+
+function isChitchatText(text: string): boolean {
+  const t = text.trim()
+  if (!t || t.length > 120) return false
+  if (CHITCHAT_CLOSERS.test(t)) return true
+  return CHITCHAT_OPENERS.test(t) && CHITCHAT_TASKS.test(t)
+}
+
+/** 剥离模型在正文开头/结尾输出的寒暄、说明文字（如"我来帮你把这篇…排版成…"），
+ *  这些是面向用户的操作提示，不应出现在最终渲染结果里 */
+function stripOpeningChitchat(html: string): string {
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html")
+    const body = doc.body
+
+    // 找第一个有内容的节点（通常是全局容器 <section>）
+    const topChildren = Array.from(body.childNodes).filter(
+      (n) => n.nodeType === Node.ELEMENT_NODE || (n.textContent || "").trim()
+    )
+    const target = topChildren[0] && topChildren[0].nodeType === Node.ELEMENT_NODE
+      ? (topChildren[0] as HTMLElement)
+      : (body as HTMLElement)
+
+    // 开头剥离（最多 2 个寒暄节点）
+    let removedStart = 0
+    for (const child of Array.from(target.childNodes)) {
+      const text = (child.textContent || "").trim()
+      if (!text) continue
+      if (isChitchatText(text) && removedStart < 2) {
+        target.removeChild(child)
+        removedStart++
+        continue
+      }
+      break
+    }
+
+    // 结尾剥离（最多 1 个收尾节点）
+    let removedTail = false
+    const tailChildren = Array.from(target.childNodes).reverse()
+    for (const child of tailChildren) {
+      const text = (child.textContent || "").trim()
+      if (!text) continue
+      if (CHITCHAT_CLOSERS.test(text)) {
+        target.removeChild(child)
+        removedTail = true
+        break
+      }
+      break
+    }
+
+    // 没有删除任何节点：说明没有寒暄/收尾语，原样返回，不做任何 DOM 重排，
+    // 保证内联样式、属性写法（下划线/加粗/标题/颜色）与模型输出完全一致，微信复制不受影响
+    if (removedStart === 0 && !removedTail) return html
+
+    return doc.body.innerHTML
+  } catch {
+    return html
+  }
 }
 
 /** 修正正文中的半角标点为全角（仅处理文本节点，不碰 HTML 属性） */
@@ -541,6 +636,25 @@ function fixTextPunctuation(text: string): string {
 function ensureSpanLeaf(html: string) {
   try {
     var doc = new DOMParser().parseFromString(html, "text/html")
+    // 1. 展开含元素子节点的非法 leaf：微信要求 leaf 内只能有纯文本，
+    //    若 leaf 内嵌套带样式标签（如 <span leaf=""><span style="border-bottom…">文字</span></span>），
+    //    粘贴到公众号后内部样式会被忽略 → 下划线/加粗失效。
+    //    装饰空元素 <span leaf=""><br></span> 是合法形式，保留不动。
+    var leafSpans = doc.body.querySelectorAll('span[leaf]')
+    for (var i = leafSpans.length - 1; i >= 0; i--) {
+      var ls = leafSpans[i]
+      var hasRealElement = false
+      for (var j = 0; j < ls.childNodes.length; j++) {
+        var c = ls.childNodes[j]
+        if (c.nodeType === Node.ELEMENT_NODE && c.nodeName !== 'BR') { hasRealElement = true; break }
+      }
+      if (!hasRealElement || !ls.parentNode) continue
+      // unwrap：子节点全部上提到父级后删除 leaf，随后由第 2 步统一对文本重包 leaf
+      var parent = ls.parentNode
+      while (ls.firstChild) parent.insertBefore(ls.firstChild, ls)
+      parent.removeChild(ls)
+    }
+    // 2. 文本节点包 leaf
     var walk = document.createTreeWalker(doc.body, 4)
     var nodes = []
     while (walk.nextNode()) nodes.push(walk.currentNode)

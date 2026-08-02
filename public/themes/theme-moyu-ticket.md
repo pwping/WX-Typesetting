@@ -10,7 +10,7 @@
 >
 > **WeChat 兼容铁律**（本主题组件全部已按此写好，改动时必须遵守）：
 > - 所有"装饰性空元素"（撕票虚线、头像占位框）**没有真实内容时整块删掉**，不留空 section
-> - 正文字号固定 `14px`、行高 `1.9`——这是本主题的排版铁律，不与其它主题共用字号
+> - 正文字号固定 `15px`、行高 `1.9`——这是本主题的排版铁律，不与其它主题共用字号
 > - 不要把 `font-size`/`border-bottom` 打在 `<strong>` 上，高亮样式统一挂在外层 `<span>` 上
 > - `writing-mode:vertical-rl`（票据侧边竖排字）在个别老旧客户端可能渲染异常，如遇异常可退化为横排小字，不影响其余结构
 
@@ -30,12 +30,12 @@
 代码背景：       #F3F4F6
 代码字色：       #1F2937
 品牌紫色（AI 品牌专用，如 Claude/Obsidian/Gemini）：#7C3AED
-正文字号：       14px（本主题铁律，不可改）
+正文字号：       15px（本主题铁律，不可改）
 正文行高：       1.9
 全局行高：       1.75
 字间距：         0.5px
 最大宽度：       677px
-内容区边距：     0 20px（正文区块左右各 20px）
+内容区边距：     0 10px（正文区块左右各 10px）
 章节间距：       margin-bottom: 32px
 ```
 
@@ -131,7 +131,7 @@
 **可替换字段**：`{{编号}}` `{{标题}}` `{{副标题}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <section style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #1a1a1a;">
     <section style="background:#059669;color:#fff;font-size:12px;font-weight:800;padding:6px 12px;letter-spacing:2px;"><span leaf="">{{编号}}</span></section>
     <section style="font-size:18px;font-weight:800;color:#1a1a1a;letter-spacing:1px;"><span leaf="">{{标题}}</span></section>
@@ -152,7 +152,7 @@
 **可替换字段**：`{{小节标题}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <section style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
     <section style="width:4px;height:16px;background:#059669;"><span leaf=""><br></span></section>
     <section style="font-size:15px;font-weight:700;color:#1a1a1a;"><span leaf="">{{小节标题}}</span></section>
@@ -169,8 +169,8 @@
 **可替换字段**：`{{正文内容}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
-  <p style="font-size:14px;color:#555;line-height:1.9;margin-bottom:16px;text-align:justify;">
+<section style="margin-bottom:32px;padding:0 10px;">
+  <p style="font-size:15px;color:#555;line-height:1.9;margin-bottom:16px;text-align:justify;">
     <span leaf="">{{正文内容}}</span>
   </p>
 </section>
@@ -223,7 +223,7 @@
 **可替换字段**：`{{case编号}}` `{{案例名称}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <p style="font-size:13px;color:#1a1a1a;font-weight:600;margin-bottom:0;">
     <span leaf="">case{{case编号}}: {{案例名称}}</span>
   </p>
@@ -237,7 +237,7 @@
 **用途**：包裹图片，票据纸感边框（米黄底 + 细灰边）。**规则**：`<img>` 标签及其 `src`/`data-src` 原封不动复制，只套外层容器。
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <section style="background:#fffef8;border:1px solid #eee;padding:6px;margin-bottom:0;">
     <figure style="margin:0;">
       <span leaf=""><img src="{{图片URL}}" style="max-width:100%;height:auto;display:block;margin:0 auto;"></span>
@@ -255,9 +255,9 @@
 **可替换字段**：`{{前缀}}` `{{结论内容}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <section style="background:#F0FDF4;border-left:4px solid #059669;padding:14px 16px;margin-bottom:0;">
-    <p style="font-size:14px;color:#1a1a1a;font-weight:600;line-height:1.7;margin:0;">
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;line-height:1.7;margin:0;">
       <span leaf="">{{前缀}}</span>
       <span style="color:#059669;"><span leaf="">{{结论内容}}</span></span>
     </p>
@@ -274,7 +274,7 @@
 **可替换字段**：`{{序号}}` `{{小标题}}` `{{描述}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <section style="background:#fffef8;border:1px solid #eee;margin-bottom:12px;">
     <section style="display:flex;align-items:stretch;">
       <section style="width:36px;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;"><span leaf="">{{序号}}</span></section>
@@ -298,14 +298,14 @@
 **可替换字段**：`{{金句前半}}` `{{大数字}}`（可选）`{{金句后半}}` `{{补充说明}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <section style="background:#fffef8;border:2px solid #1a1a1a;box-shadow:3px 3px 0 #1a1a1a;padding:20px;margin-bottom:0;">
     <p style="font-size:15px;color:#1a1a1a;font-weight:700;line-height:1.8;margin:0 0 12px;text-align:center;">
       <span leaf="">{{金句前半}}</span>
       <span style="color:#059669;font-size:24px;"><span leaf="">{{大数字}}</span></span>
       <span leaf="">{{金句后半}}</span>
     </p>
-    <p style="font-size:14px;color:#555;line-height:1.8;margin:0;text-align:justify;">
+    <p style="font-size:15px;color:#555;line-height:1.8;margin:0;text-align:justify;">
       <span leaf="">{{补充说明}}</span>
     </p>
   </section>
@@ -323,7 +323,7 @@
 **可替换字段**：`{{#标签}}`
 
 ```html
-<section style="margin-bottom:32px;padding:0 20px;">
+<section style="margin-bottom:32px;padding:0 10px;">
   <section style="display:flex;gap:8px;flex-wrap:wrap;">
     <section style="font-size:10px;color:#059669;border:1px solid #059669;padding:4px 10px;"><span leaf="">{{#标签1}}</span></section>
     <section style="font-size:10px;color:#059669;border:1px solid #059669;padding:4px 10px;"><span leaf="">{{#标签2}}</span></section>
