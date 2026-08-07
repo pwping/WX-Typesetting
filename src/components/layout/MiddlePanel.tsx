@@ -12,6 +12,40 @@ import { getSecret } from "../../lib/storage/crypto"
 import { ImgbbPrompt } from "../editor/ImgbbPrompt"
 import { useEffect, useRef, useState, useCallback } from "react"
 
+/** 计算 textarea 中指定字符位置的光标坐标（镜像 div 技术，模拟换行与内边距） */
+function getCaretCoordinates(textarea: HTMLTextAreaElement, position: number): { top: number; left: number } {
+  const div = document.createElement("div")
+  const style = div.style
+  const computed = window.getComputedStyle(textarea)
+  const copyProps = [
+    "fontFamily", "fontSize", "fontWeight", "fontStyle", "fontVariant", "letterSpacing",
+    "wordSpacing", "lineHeight", "textIndent", "textTransform", "tabSize", "textAlign",
+    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
+    "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth",
+  ]
+  for (const prop of copyProps) {
+    ;(style as unknown as Record<string, string>)[prop] = (computed as unknown as Record<string, string>)[prop]
+  }
+  style.position = "absolute"
+  style.visibility = "hidden"
+  style.whiteSpace = "pre-wrap"
+  style.wordWrap = "break-word"
+  style.width = textarea.clientWidth + "px"
+  style.overflow = "hidden"
+  style.boxSizing = computed.boxSizing
+
+  div.appendChild(document.createTextNode(textarea.value.slice(0, position)))
+  const marker = document.createElement("span")
+  marker.textContent = textarea.value.slice(position) || " "
+  div.appendChild(marker)
+
+  document.body.appendChild(div)
+  const top = marker.offsetTop - (parseInt(computed.borderTopWidth || "0", 10) || 0)
+  const left = marker.offsetLeft - (parseInt(computed.borderLeftWidth || "0", 10) || 0)
+  document.body.removeChild(div)
+  return { top, left }
+}
+
 export function MiddlePanel() {
   const markdown = useEditorStore((s) => s.markdown)
   const setMarkdown = useEditorStore((s) => s.setMarkdown)
@@ -27,8 +61,10 @@ export function MiddlePanel() {
   const getHtmlRenderConfig = useSettingsStore((s) => s.getHtmlRenderConfig)
   const [dotCount, setDotCount] = useState(0)
   const [mdUploading, setMdUploading] = useState(false)
+  const [mdSpinnerPos, setMdSpinnerPos] = useState<{ top: number; left: number } | null>(null)
   const [showMdImgbbPrompt, setShowMdImgbbPrompt] = useState(false)
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const mdSpinnerBaseRef = useRef<{ top: number; left: number } | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const markdownHistory = useRef<string[]>([markdown])
   const historyIdx = useRef(0)
@@ -206,6 +242,12 @@ const handleTypeset = async () => {
   }
 
   const handleMdUpload = useCallback((file: File) => {
+    const ta = mdTextareaRef.current
+    if (ta) {
+      const pos = getCaretCoordinates(ta, ta.selectionStart)
+      mdSpinnerBaseRef.current = { top: pos.top, left: pos.left }
+      setMdSpinnerPos({ top: pos.top - ta.scrollTop, left: pos.left - ta.scrollLeft })
+    }
     setMdUploading(true)
     uploadImage(
       file,
@@ -225,7 +267,11 @@ const handleTypeset = async () => {
         setTimeout(() => { ta.focus(); ta.setSelectionRange(cursorPos, cursorPos); ta.scrollTop = savedScroll }, 0)
       },
       (msg) => { alert(msg) },
-    ).finally(() => setMdUploading(false))
+    ).finally(() => {
+      setMdUploading(false)
+      setMdSpinnerPos(null)
+      mdSpinnerBaseRef.current = null
+    })
   }, [markdown, setMarkdown])
 
   const insertMarkdown = useCallback((syntax: string, sampleText: string) => {
@@ -331,11 +377,17 @@ const handleTypeset = async () => {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleMdUpload(f); e.target.value = '' } }} />
         </div>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="relative flex-1 overflow-hidden">
         <textarea
           ref={mdTextareaRef}
           value={markdown}
           onChange={(e) => setMarkdown(e.target.value)}
+          onScroll={(e) => {
+            const base = mdSpinnerBaseRef.current
+            if (base) {
+              setMdSpinnerPos({ top: base.top - e.currentTarget.scrollTop, left: base.left - e.currentTarget.scrollLeft })
+            }
+          }}
           onKeyDown={(e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
               e.preventDefault()
@@ -350,6 +402,20 @@ const handleTypeset = async () => {
           placeholder="在这里输入或粘贴 Markdown 文章..."
           spellCheck={false}
         />
+        {mdUploading && mdSpinnerPos && (
+          <div
+            className="pointer-events-none absolute z-10"
+            style={{ top: mdSpinnerPos.top, left: mdSpinnerPos.left }}
+          >
+            <div className="flex items-center gap-1.5 rounded-full border border-app-border bg-app-surface px-2 py-1 shadow-sm">
+              <svg className="h-3.5 w-3.5 animate-spin text-app-accent" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+              <span className="text-[10px] text-app-text-secondary">上传中</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="border-t border-app-border px-3 py-2.5">

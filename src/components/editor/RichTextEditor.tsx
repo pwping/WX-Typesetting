@@ -9,7 +9,9 @@ import Highlight from '@tiptap/extension-highlight'
 import { TextStyle, FontSize } from '@tiptap/extension-text-style'
 import { useEditorStore } from '../../store/useEditorStore'
 import { Toolbar } from './Toolbar'
+import { ImageUpload } from './ImageUploadExtension'
 import { useEffect, useRef } from 'react'
+import { NodeSelection } from '@tiptap/pm/state'
 
 export function RichTextEditor() {
   const richTextHtml = useEditorStore((s) => s.richTextHtml)
@@ -35,6 +37,7 @@ export function RichTextEditor() {
       }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Highlight,
+      ImageUpload,
     ],
     // 用持久化的内容初始化，刷新后内容不会丢失
     content: richTextHtml || '',
@@ -44,6 +47,24 @@ export function RichTextEditor() {
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none',
+      },
+      handleClick(view, pos, event) {
+        // Tiptap 3 的 image 节点不是 atom，ProseMirror 单击不会自动选中
+        // 这里在点击图片时手动创建 NodeSelection，让选中高亮生效
+        const target = event.target as HTMLElement | null
+        if (target instanceof HTMLImageElement) {
+          const coords = view.posAtCoords({ left: event.clientX, top: event.clientY })
+          if (coords && coords.inside > -1) {
+            const node = view.state.doc.nodeAt(coords.inside)
+            if (node?.type.name === 'image') {
+              view.dispatch(
+                view.state.tr.setSelection(NodeSelection.create(view.state.doc, coords.inside)).scrollIntoView(),
+              )
+              return true
+            }
+          }
+        }
+        return false
       },
     },
   })

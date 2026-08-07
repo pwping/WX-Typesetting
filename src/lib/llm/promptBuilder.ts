@@ -25,6 +25,13 @@ export async function buildTypesetPrompt(
       "4. **绝对不要自创图片 URL 或凭空编造图片**\n" +
       "5. 如果组件库中某组件只有含图版本，则跳过该组件，改用其他文字组件替代\n"
 
+  const coverRule = hasImage
+    ? "\n\n## 🖼️ 封面图规则\n" +
+      "1. **封面图的唯一合法来源**：Markdown 的第一个内容元素就是图片（图片上方没有任何文字、标题、引言等）时，该图作为封面图；否则本文**没有封面图**。\n" +
+      "2. **没有封面图时**：封面组件一律使用无图版（删除封面中的图片槽位），**绝对禁止**用占位图 URL（如 placehold.orence.net）、自创图片 URL 或正文图片充当封面图。\n" +
+      "3. **有封面图时**：封面使用该图；该图作为封面后，正文开头不再重复出现它（同一 URL 若在正文其他位置再次出现，仍按正文图片保留）。其余正文图片一律按原文位置正常保留，不受封面规则影响。"
+    : ""
+
   // system prompt = SKILL.md 原文 + 运行时主题变量 + 主题库 + 通用库
   // 所有排版规则、平台红线、Gotchas、合规要求一律由 SKILL.md 本身约束，此处不重复
   const systemPrompt = skillCore + "\n\n" +
@@ -53,7 +60,7 @@ export async function buildTypesetPrompt(
     "6. **禁止使用 `position` 定位（`absolute/fixed/sticky` 微信不支持，粘贴后会失效变形）**——序号、角标、徽章、左侧竖条等一律用 `display:inline-block` 或 `display:flex` 排布，禁止用 `left/top/right/bottom` 做绝对定位。\n" +
     "7. **`<span leaf=\"\">` 内只能放纯文本**——需要加粗/下划线/变色时写成 `<span style=\"…\"><span leaf=\"\">文字</span></span>`（样式标签在外、leaf 在内），禁止把带样式的 `<span>` 放进 leaf 里面（粘贴到公众号后内部样式会失效）。\n" +
     "8. 如果输出不符合以上任何一条，整篇文章都不可用。" +
-    noImageRule
+    noImageRule + coverRule
 
   // user prompt = 排版指令 + 原始 Markdown（agent 直接执行 skill 时也是这么传的）
   const userPrompt = "请将以下 Markdown 文章用「" + themeName + "」主题完整排版为公众号 HTML。直接输出纯 HTML 正文片段（<section>…</section>），不要任何说明文字或代码围栏。\n\n## 原始 Markdown 内容\n\n" + markdown

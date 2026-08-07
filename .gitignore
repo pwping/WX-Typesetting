@@ -24,6 +24,9 @@ dist-ssr
 *.sw?
 .workbuddy/
 
+# 本地实现计划（不提交）
+docs/superpowers/plans/
+
 # scratch files
 _ds.html
 _ds2.html
