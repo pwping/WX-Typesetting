@@ -241,6 +241,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   margin: 12px 0;
 }
 
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--app-accent-light);
+}
+
 .ProseMirror hr {
   border: none;
   border-top: 1px solid var(--app-border);

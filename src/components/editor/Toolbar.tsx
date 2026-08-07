@@ -13,12 +13,49 @@ export function Toolbar({ editor }: ToolbarProps) {
   const [showImgbbPrompt, setShowImgbbPrompt] = useState(false)
 
   const handleFile = (file: File) => {
+    const uploadId = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    editor.chain().focus().insertImageUpload(uploadId).run()
     setUploading(true)
     uploadImage(
       file,
-      (url) => { editor.chain().focus().setImage({ src: url }).run() },
-      (msg) => { alert(msg) },
+      (url) => {
+        const target = findImageUploadPos(editor, uploadId)
+        if (!target) return // 占位已被撤销/删除，不再插入
+        editor
+          .chain()
+          .focus()
+          .insertContentAt(
+            { from: target.pos, to: target.pos + target.size },
+            { type: 'image', attrs: { src: url } },
+          )
+          .setTextSelection(target.pos + 1)
+          .run()
+      },
+      (msg) => {
+        const target = findImageUploadPos(editor, uploadId)
+        if (target) {
+          editor
+            .chain()
+            .focus()
+            .deleteRange({ from: target.pos, to: target.pos + target.size })
+            .run()
+        }
+        alert(msg)
+      },
     ).finally(() => setUploading(false))
+  }
+
+  /** 按 uploadId 定位文档中的图片上传占位节点 */
+  function findImageUploadPos(editor: Editor, uploadId: string): { pos: number; size: number } | null {
+    let found: { pos: number; size: number } | null = null
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'imageUpload' && node.attrs.uploadId === uploadId) {
+        found = { pos, size: node.nodeSize }
+        return false
+      }
+      return true
+    })
+    return found
   }
 
   const tools: Array<{ icon: string; action: () => void; active?: boolean; title: string }> = [
