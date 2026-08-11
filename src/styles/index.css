@@ -269,9 +269,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   outline: none;
   resize: none;
   padding: 20px;
-  font-family: var(--font-mono, "SF Mono", Consolas, Monaco, monospace);
-  font-size: 13px;
-  line-height: 1.8;
+  font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.9;
   color: var(--app-text);
   background: var(--app-surface);
 }
