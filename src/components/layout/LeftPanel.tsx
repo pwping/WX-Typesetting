@@ -46,6 +46,7 @@ export function LeftPanel() {
   const [generating, setGenerating] = useState(false)
   const [genProgress, setGenProgress] = useState("")
   const [dotCount, setDotCount] = useState(0)
+  const [converted, setConverted] = useState(false)
   const [reasoningText, setReasoningText] = useState("")
   const abortRef = useRef<AbortController | null>(null)
   const streamBufferRef = useRef("")
@@ -72,6 +73,8 @@ export function LeftPanel() {
     if (richTextHtml) {
       const md = htmlToMarkdown(richTextHtml)
       setMarkdown(md)
+      setConverted(true)
+      window.setTimeout(() => setConverted(false), 1500)
     }
   }
 
@@ -187,22 +190,24 @@ export function LeftPanel() {
 
   return (
     <div className="flex w-[30%] min-w-[260px] flex-col overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm">
-      <div className="flex items-center justify-between border-b border-app-border px-4 py-2.5">
+      <div className="flex h-12 items-center justify-between border-b border-app-border px-4">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-app-text">
           <span className="h-3.5 w-0.5 rounded-full bg-app-accent" />
           文案内容
         </span>
         <div className="flex items-center gap-2">
-           <button
-             onClick={() => setShowImgbbDialog(true)}
-             className={`flex h-6 items-center rounded-md border px-1.5 text-[9px] font-medium transition ${
-               imgbbKey ? 'border-app-accent/30 bg-app-accent-light text-app-accent' : 'border-app-border text-app-text-tertiary hover:bg-app-hover'
-             }`}
-             title="图床配置"
-           >
-             {imgbbKey ? '已配置图片API' : '配置图床API'}
-           </button>
-           <span className="ml-0.5 text-[10px] text-app-text-tertiary">
+          <button
+            onClick={() => setShowImgbbDialog(true)}
+            className={`flex cursor-pointer items-center rounded-lg border px-3 py-1.5 text-[11px] font-medium transition ${
+              imgbbKey
+                ? 'border-app-accent/30 bg-app-surface text-app-accent hover:bg-app-accent-light'
+                : 'border-app-border bg-app-surface text-app-text-secondary hover:bg-app-hover'
+            }`}
+            title="图床配置"
+          >
+            {imgbbKey ? '已配置图片API' : '配置图床API'}
+          </button>
+          <span className="ml-0.5 text-[10px] text-app-text-tertiary">
              {richTextHtml ? `${countChars(richTextHtml)} 字` : '编辑原文'}
            </span>
            <button
@@ -229,9 +234,11 @@ export function LeftPanel() {
         <button
           onClick={handleConvert}
           disabled={!richTextHtml}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-app-accent py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className={`flex w-full items-center justify-center gap-2 rounded-lg py-1.5 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40 ${
+            converted ? 'bg-emerald-600' : 'bg-app-accent hover:opacity-90'
+          }`}
         >
-          转换为 Markdown →
+          {converted ? '转换完成 ✓' : '转换为 Markdown →'}
         </button>
       </div>
 

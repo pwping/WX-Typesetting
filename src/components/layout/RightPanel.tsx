@@ -33,7 +33,9 @@ export function RightPanel() {
           try {
             const win = iframeRef.current?.contentWindow
             if (win) {
-              win.scrollTo(0, win.document.body.scrollHeight)
+              // 实时渲染中跟随最新内容滚动到底部；渲染完成或刷新页面后定位到最上方
+              const targetY = streamStatus === "streaming" ? win.document.body.scrollHeight : 0
+              win.scrollTo(0, targetY)
             }
           } catch {
             // 跨域安全限制时忽略
@@ -41,7 +43,7 @@ export function RightPanel() {
         })
       }
     }
-  }, [generatedHtml])
+  }, [generatedHtml, streamStatus])
 
   const handleCopy = async () => {
     const ok = await copyHtmlToClipboard(generatedHtml)
@@ -129,9 +131,12 @@ export function RightPanel() {
 
   return (
     <div className="relative flex w-[30%] min-w-[260px] flex-col overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm">
-      <div className="flex items-center justify-between border-b border-app-border bg-app-surface px-4 py-2.5">
+      <div className="flex h-12 items-center justify-between border-b border-app-border bg-app-surface px-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-app-text">预览</span>
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-app-text">
+            <span className="h-3.5 w-0.5 rounded-full bg-app-accent" />
+            预览
+          </span>
           {theme && (
             <span className="flex items-center gap-1.5 rounded-md bg-app-accent-light px-2 py-0.5 text-xs font-bold text-app-accent-text">
               <span className="h-2 w-2 rounded-full" style={{ background: theme.color }} />
