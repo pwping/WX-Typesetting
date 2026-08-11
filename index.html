@@ -49,10 +49,14 @@
   </head>
   <body>
     <!--
-      SEO 兜底内容：SPA 挂载前/不执行 JS 的爬虫（百度、部分AI爬虫）可读取此静态内容。
-      React 挂载后会被完整应用替换，不影响实际功能。
+      SPA 挂载容器：保持为空，React 挂载时直接渲染，避免用户看到静态内容闪烁。
     -->
-    <div id="root">
+    <div id="root"></div>
+    <noscript>
+      <!--
+        SEO 兜底内容：仅禁用 JavaScript 时显示，供不执行 JS 的爬虫（百度、部分 AI 爬虫）读取。
+        正常用户启用 JS 时永远不会看到此内容。
+      -->
       <main style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:#18181b;line-height:1.8;">
         <h1>AI智能排版工作台</h1>
         <p>面向微信公众号作者的 Markdown 一键排版工具。支持富文本编辑、6 套内置主题（摸鱼绿、红白色系、石墨极简风、留白禅意风、摸鱼票据风、橄榄手记）、自定义主题生成与 DeepSeek 多模型智能排版。</p>
@@ -66,7 +70,7 @@
         </ul>
         <p>打开应用请启用 JavaScript。</p>
       </main>
-    </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
