@@ -333,7 +333,7 @@ const handleTypeset = async () => {
   }, [markdown, setMarkdown])
 
   return (
-    <div className={`flex ${leftPanelOpen ? "w-[40%]" : "flex-1"} min-w-[300px] flex-col overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm`}>
+    <div className={`flex ${leftPanelOpen ? "w-[35%]" : "flex-1"} min-w-[260px] flex-col overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm`}>
       <div className="flex h-12 items-center justify-between border-b border-app-border px-4">
         <span className="flex items-center gap-1.5 truncate text-xs font-semibold text-app-text">
           <span className="h-3.5 w-0.5 rounded-full bg-app-accent" />
