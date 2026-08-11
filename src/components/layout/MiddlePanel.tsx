@@ -60,6 +60,14 @@ export function MiddlePanel() {
   const getAllThemes = useThemeStore((s) => s.getAllThemes)
   const getHtmlRenderConfig = useSettingsStore((s) => s.getHtmlRenderConfig)
   const [dotCount, setDotCount] = useState(0)
+  const [toolbarExpanded, setToolbarExpanded] = useState(() => {
+    try {
+      const saved = localStorage.getItem("wxtypesetting:mdToolbarExpanded")
+      return saved === null ? true : saved === "1"
+    } catch {
+      return true
+    }
+  })
   const [mdUploading, setMdUploading] = useState(false)
   const [mdSpinnerPos, setMdSpinnerPos] = useState<{ top: number; left: number } | null>(null)
   const [showMdImgbbPrompt, setShowMdImgbbPrompt] = useState(false)
@@ -105,6 +113,14 @@ export function MiddlePanel() {
     const timer = setInterval(() => setDotCount((n) => (n + 1) % 4), 500)
     return () => clearInterval(timer)
   }, [streamStatus])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("wxtypesetting:mdToolbarExpanded", toolbarExpanded ? "1" : "0")
+    } catch {
+      // ignore
+    }
+  }, [toolbarExpanded])
 
   const handleRedo = () => {
     const hist = markdownHistory.current
@@ -318,65 +334,87 @@ const handleTypeset = async () => {
 
   return (
     <div className={`flex ${leftPanelOpen ? "w-[40%]" : "flex-1"} min-w-[300px] flex-col overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm`}>
-      <div className="flex items-center justify-between border-b border-app-border px-4 py-2.5">
-        <span className="text-xs font-semibold text-app-text">Markdown 编辑器</span>
-        <div className="flex items-center gap-2">
-        </div>
+      <div className="flex h-12 items-center justify-between border-b border-app-border px-4">
+        <span className="flex items-center gap-1.5 truncate text-xs font-semibold text-app-text">
+          <span className="h-3.5 w-0.5 rounded-full bg-app-accent" />
+          Markdown 编辑器
+        </span>
+        <button
+          onClick={() => setToolbarExpanded((v) => !v)}
+          title={toolbarExpanded ? "收起 Markdown 工具栏" : "展开 Markdown 工具栏"}
+          className="flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-[11px] font-medium text-app-text-secondary transition hover:bg-app-hover"
+        >
+          {toolbarExpanded ? (
+            <>
+              <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6" /></svg>
+              <span>收起 Markdown 工具栏</span>
+            </>
+          ) : (
+            <>
+              <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+              <span>展开 Markdown 工具栏</span>
+            </>
+          )}
+        </button>
       </div>
       {/* Markdown 快捷工具栏 */}
-      <div className="border-b border-app-border px-3 py-1.5 space-y-1.5">
-        <div className="flex gap-1">
-          <button onClick={() => insertMarkdown("#", "标题")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="H1 标题"># 标题</button>
-          <button onClick={() => insertMarkdown("##", "章节")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="H2 章节">## 章节</button>
-          <button onClick={() => insertMarkdown("###", "小标题")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="H3 小标题">### 小标题</button>
-        </div>
-        <div className="flex gap-1">
-          <button onClick={() => insertMarkdown("**", "加粗文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="加粗">B 加粗</button>
-          <button onClick={() => insertMarkdown("*", "斜体文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold italic text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="斜体">I 斜体</button>
-          <button onClick={() => insertMarkdown("==", "高亮文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="高亮">== 高亮</button>
-          <button onClick={() => insertMarkdown("<u>", "下划线文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="下划线"><u>U</u> 下划线</button>
-          <button onClick={() => insertMarkdown("LINK", "链接文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="链接">LINK 链接</button>
-          <button onClick={() => insertMarkdown("~~", "删除线文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="删除线">~~ 删除线</button>
-        </div>
-        <div className="flex gap-1">
-          <button onClick={() => insertMarkdown(">", "引用内容")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="引用内容">&gt; 引用内容</button>
-          <button onClick={() => insertMarkdown("-", "列表项")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="无序列表">- 无序列表</button>
-          <button onClick={() => insertMarkdown("1.", "列表项")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="有序列表">1. 有序列表</button>
-          <button onClick={() => insertMarkdown("[]", "任务内容")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="任务列表">[ ] 任务列表</button>
-          <button onClick={() => insertMarkdown("<small>", "注释文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="小字注释">注 小字</button>
-        </div>
-        <div className="flex gap-1">
-          <button onClick={() => insertMarkdown("\x60", "代码")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="行内代码">` 行内代码</button>
-          <button onClick={() => insertMarkdown("IMG", "图片说明")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="图片">IMG 图片</button>
-          <button onClick={() => insertMarkdown("</>", "代码示例")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="代码块">&lt;/&gt; 代码</button>
-          <button onClick={() => insertMarkdown("---", "")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="分割线">--- 分割线</button>
-          <button
-            onClick={() => {
-              if (!getSecret('imgbb_api_key')) { setShowMdImgbbPrompt(true); return }
-              ;(document.getElementById('gzh-md-img-upload') as HTMLInputElement)?.click()
-            }}
-            disabled={mdUploading}
-            title="上传图片"
-            className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-medium text-app-text-secondary transition hover:border-app-accent/30 hover:bg-app-accent-light hover:text-app-accent disabled:opacity-50"
-          >
-            {mdUploading ? (
-              <svg className="inline h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
-                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            ) : (
-              <svg className="inline h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-            )}
-            {" "}上传图片
-          </button>
-          <input id="gzh-md-img-upload" type="file" accept="image/*" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleMdUpload(f); e.target.value = '' } }} />
-        </div>
+      {toolbarExpanded && (
+      <div className="border-b border-app-border px-3 py-1.5">
+        <div className="space-y-1.5">
+            <div className="flex gap-1">
+              <button onClick={() => insertMarkdown("#", "标题")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="H1 标题"># 标题</button>
+              <button onClick={() => insertMarkdown("##", "章节")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="H2 章节">## 章节</button>
+              <button onClick={() => insertMarkdown("###", "小标题")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="H3 小标题">### 小标题</button>
+            </div>
+            <div className="flex gap-1">
+              <button onClick={() => insertMarkdown("**", "加粗文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="加粗">B 加粗</button>
+              <button onClick={() => insertMarkdown("*", "斜体文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold italic text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="斜体">I 斜体</button>
+              <button onClick={() => insertMarkdown("==", "高亮文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="高亮">== 高亮</button>
+              <button onClick={() => insertMarkdown("<u>", "下划线文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="下划线"><u>U</u> 下划线</button>
+              <button onClick={() => insertMarkdown("LINK", "链接文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="链接">LINK 链接</button>
+              <button onClick={() => insertMarkdown("~~", "删除线文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="删除线">~~ 删除线</button>
+            </div>
+            <div className="flex gap-1">
+              <button onClick={() => insertMarkdown(">", "引用内容")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="引用内容">&gt; 引用内容</button>
+              <button onClick={() => insertMarkdown("-", "列表项")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="无序列表">- 无序列表</button>
+              <button onClick={() => insertMarkdown("1.", "列表项")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="有序列表">1. 有序列表</button>
+              <button onClick={() => insertMarkdown("[]", "任务内容")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="任务列表">[ ] 任务列表</button>
+              <button onClick={() => insertMarkdown("<small>", "注释文字")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="小字注释">注 小字</button>
+            </div>
+            <div className="flex gap-1">
+              <button onClick={() => insertMarkdown("\x60", "代码")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="行内代码">` 行内代码</button>
+              <button onClick={() => insertMarkdown("IMG", "图片说明")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="图片">IMG 图片</button>
+              <button onClick={() => insertMarkdown("</>", "代码示例")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="代码块">&lt;/&gt; 代码</button>
+              <button onClick={() => insertMarkdown("---", "")} className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-bold text-app-text-secondary transition hover:bg-app-hover hover:text-app-accent" title="分割线">--- 分割线</button>
+              <button
+                onClick={() => {
+                  if (!getSecret('imgbb_api_key')) { setShowMdImgbbPrompt(true); return }
+                  ;(document.getElementById('gzh-md-img-upload') as HTMLInputElement)?.click()
+                }}
+                disabled={mdUploading}
+                title="上传图片"
+                className="cursor-pointer rounded-md border border-app-border px-3 py-1 text-[11px] font-medium text-app-text-secondary transition hover:border-app-accent/30 hover:bg-app-accent-light hover:text-app-accent disabled:opacity-50"
+              >
+                {mdUploading ? (
+                  <svg className="inline h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg className="inline h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                )}
+                {" "}上传图片
+              </button>
+              <input id="gzh-md-img-upload" type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleMdUpload(f); e.target.value = '' } }} />
+            </div>
+          </div>
       </div>
+      )}
       <div className="relative flex-1 overflow-hidden">
         <textarea
           ref={mdTextareaRef}
