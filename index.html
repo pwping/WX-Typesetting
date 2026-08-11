@@ -3,13 +3,70 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI智能排版工作台</title>
+    <title>AI智能排版工作台 - 公众号Markdown排版工具 | WX-Typesetting</title>
+    <meta name="description" content="AI智能排版工作台：支持 Markdown/富文本一键转微信公众号排版，6套内置主题（摸鱼绿/红白/石墨/禅意/票据风/橄榄手记）+ 自定义主题生成，DeepSeek 多模型驱动，直接复制粘贴到公众号，样式不丢失。" />
+    <meta name="keywords" content="公众号排版,微信排版,Markdown排版,AI排版,公众号编辑器,gzh-design,微信文章排版工具" />
+    <meta name="author" content="WX-Typesetting" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#059669" />
+    <link rel="canonical" href="https://www.wxtype.top/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AI智能排版工作台" />
+    <meta property="og:title" content="AI智能排版工作台 - 公众号Markdown排版工具" />
+    <meta property="og:description" content="Markdown/富文本一键转公众号排版，6套内置主题+自定义主题生成，DeepSeek多模型驱动，复制粘贴到公众号样式不丢失。" />
+    <meta property="og:url" content="https://www.wxtype.top/" />
+    <meta property="og:image" content="https://www.wxtype.top/favicon.svg" />
+    <meta property="og:locale" content="zh_CN" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="AI智能排版工作台 - 公众号Markdown排版工具" />
+    <meta name="twitter:description" content="Markdown/富文本一键转公众号排版，6套内置主题+自定义主题生成，复制粘贴样式不丢失。" />
+    <meta name="twitter:image" content="https://www.wxtype.top/favicon.svg" />
+
+    <!-- Structured Data: WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "AI智能排版工作台",
+      "url": "https://www.wxtype.top/",
+      "description": "将 Markdown/富文本转换为可直接粘贴到微信公众号编辑器的排版 HTML 工具，支持多主题与自定义主题生成。",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "zh-CN",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
+      "featureList": "Markdown转HTML,富文本编辑,6套内置主题,自定义主题生成,DeepSeek多模型,公众号合规校验,一键复制"
+    }
+    </script>
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      SEO 兜底内容：SPA 挂载前/不执行 JS 的爬虫（百度、部分AI爬虫）可读取此静态内容。
+      React 挂载后会被完整应用替换，不影响实际功能。
+    -->
+    <div id="root">
+      <main style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:#18181b;line-height:1.8;">
+        <h1>AI智能排版工作台</h1>
+        <p>面向微信公众号作者的 Markdown 一键排版工具。支持富文本编辑、6 套内置主题（摸鱼绿、红白色系、石墨极简风、留白禅意风、摸鱼票据风、橄榄手记）、自定义主题生成与 DeepSeek 多模型智能排版。</p>
+        <h2>核心功能</h2>
+        <ul>
+          <li>Markdown / 富文本 → 公众号 HTML，直接复制粘贴，样式不丢失</li>
+          <li>6 套内置主题，一键切换</li>
+          <li>自定义主题：文字描述或参考图生成主题组件库</li>
+          <li>公众号合规校验，自动清理不支持的 CSS 属性</li>
+          <li>本地存储，文章与 API Key 不上传服务器</li>
+        </ul>
+        <p>打开应用请启用 JavaScript。</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
