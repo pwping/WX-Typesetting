@@ -63,7 +63,7 @@ export function MiddlePanel() {
   const [toolbarExpanded, setToolbarExpanded] = useState(() => {
     try {
       const saved = localStorage.getItem("wxtypesetting:mdToolbarExpanded")
-      return saved === null ? true : saved === "1"
+      return saved === null ? false : saved === "1"
     } catch {
       return true
     }
