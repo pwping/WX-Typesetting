@@ -32,10 +32,13 @@ function escapeHtml(text: string): string {
 
 export function LeftPanel() {
   const richTextHtml = useEditorStore((s) => s.richTextHtml)
+  const markdown = useEditorStore((s) => s.markdown)
+  const generatedHtml = useEditorStore((s) => s.generatedHtml)
   const setMarkdown = useEditorStore((s) => s.setMarkdown)
   const setAiGeneratedContent = useEditorStore((s) => s.setAiGeneratedContent)
   const getHtmlRenderConfig = useSettingsStore((s) => s.getHtmlRenderConfig)
   const setLeftPanelOpen = useEditorStore((s) => s.setLeftPanelOpen)
+  const setClearConfirmOpen = useEditorStore((s) => s.setClearConfirmOpen)
   const setShowApiKeyDialog = useSettingsStore((s) => s.setShowApiKeyDialog)
   const imgbbKey = useSettingsStore((s) => s.imgbbKey)
   const showImgbbDialog = useSettingsStore((s) => s.showImgbbDialog)
@@ -210,6 +213,14 @@ export function LeftPanel() {
           <span className="ml-0.5 text-[10px] text-app-text-tertiary">
              {richTextHtml ? `${countChars(richTextHtml)} 字` : '编辑原文'}
            </span>
+           <button
+             onClick={() => setClearConfirmOpen(true)}
+             disabled={!richTextHtml && !markdown && !generatedHtml}
+             className="flex h-6 w-6 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-text-tertiary transition hover:bg-red-50 hover:text-red-500 hover:border-red-200 disabled:cursor-not-allowed disabled:opacity-30"
+             title="清空全部内容"
+           >
+             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6" /></svg>
+           </button>
            <button
              onClick={() => setLeftPanelOpen(false)}
             className="flex h-6 w-6 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-text-tertiary transition hover:bg-app-hover hover:text-app-text"

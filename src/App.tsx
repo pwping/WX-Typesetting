@@ -10,6 +10,41 @@ import { ApiKeyDialog } from "./components/topbar/ApiKeyDialog"
 import { CustomThemeDialog } from "./components/topbar/CustomThemeDialog"
 import { BalanceAlert } from "./components/topbar/BalanceAlert"
 
+function ClearConfirmDialog() {
+  const clearConfirmOpen = useEditorStore((s) => s.clearConfirmOpen)
+  const setClearConfirmOpen = useEditorStore((s) => s.setClearConfirmOpen)
+  const clearAll = useEditorStore((s) => s.clearAll)
+
+  if (!clearConfirmOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30" onClick={() => setClearConfirmOpen(false)}>
+      <div
+        className="w-[360px] rounded-2xl bg-app-surface p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "dialogIn 0.18s ease-out" }}
+      >
+        <p className="mb-2 text-sm font-semibold text-app-text">清空全部内容</p>
+        <p className="mb-5 text-xs text-app-text-secondary">清空后，文案内容、Markdown 和预览三个区域的内容都会被清除，此操作不可恢复。</p>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => setClearConfirmOpen(false)}
+            className="cursor-pointer rounded-lg border border-app-border px-4 py-1.5 text-xs text-app-text-secondary transition hover:bg-app-hover"
+          >
+            取消
+          </button>
+          <button
+            onClick={clearAll}
+            className="cursor-pointer rounded-lg bg-red-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600"
+          >
+            确认清空
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const leftPanelOpen = useEditorStore((s) => s.leftPanelOpen)
   const websiteThemeId = useThemeStore((s) => s.websiteThemeId)
@@ -38,6 +73,7 @@ export default function App() {
       <ApiKeyDialog />
       <CustomThemeDialog />
       <BalanceAlert />
+      <ClearConfirmDialog />
     </div>
   )
 }

@@ -13,6 +13,8 @@ interface EditorState {
   currentArticleId: string | null
   aiContentTrigger: string
   leftPanelOpen: boolean
+  clearConfirmOpen: boolean
+  clearEditorTrigger: number
 
   setMode: (mode: EditorMode) => void
   setRichTextHtml: (html: string) => void
@@ -24,6 +26,8 @@ interface EditorState {
   reset: () => void
   setAiGeneratedContent: (html: string) => void
   setLeftPanelOpen: (open: boolean) => void
+  setClearConfirmOpen: (open: boolean) => void
+  clearAll: () => void
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -39,6 +43,8 @@ export const useEditorStore = create<EditorState>()(
       currentArticleId: null,
       aiContentTrigger: '',
       leftPanelOpen: true,
+      clearConfirmOpen: false,
+      clearEditorTrigger: 0,
 
       setMode: (mode) => set({ mode }),
       setRichTextHtml: (html) => set({ richTextHtml: html }),
@@ -48,11 +54,23 @@ export const useEditorStore = create<EditorState>()(
       setValidationResult: (result) => set({ validationResult: result }),
       setCurrentArticleId: (id) => set({ currentArticleId: id }),
       setLeftPanelOpen: (open) => set({ leftPanelOpen: open }),
+      setClearConfirmOpen: (open) => set({ clearConfirmOpen: open }),
 
       setAiGeneratedContent: (html) => {
         const key = `__ai_${Date.now()}__`
         set({ aiContentTrigger: key + html, richTextHtml: html })
       },
+      clearAll: () =>
+        set((state) => ({
+          richTextHtml: '',
+          markdown: '',
+          generatedHtml: '',
+          streamStatus: 'idle',
+          streamProgress: '',
+          validationResult: null,
+          clearConfirmOpen: false,
+          clearEditorTrigger: state.clearEditorTrigger + 1,
+        })),
       reset: () =>
         set({
           richTextHtml: '',

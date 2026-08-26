@@ -49,9 +49,12 @@ function getCaretCoordinates(textarea: HTMLTextAreaElement, position: number): {
 export function MiddlePanel() {
   const markdown = useEditorStore((s) => s.markdown)
   const setMarkdown = useEditorStore((s) => s.setMarkdown)
+  const richTextHtml = useEditorStore((s) => s.richTextHtml)
+  const generatedHtml = useEditorStore((s) => s.generatedHtml)
   const setGeneratedHtml = useEditorStore((s) => s.setGeneratedHtml)
   const setStreamStatus = useEditorStore((s) => s.setStreamStatus)
   const setValidationResult = useEditorStore((s) => s.setValidationResult)
+  const setClearConfirmOpen = useEditorStore((s) => s.setClearConfirmOpen)
   const streamStatus = useEditorStore((s) => s.streamStatus)
   const streamProgress = useEditorStore((s) => s.streamProgress)
   const leftPanelOpen = useEditorStore((s) => s.leftPanelOpen)
@@ -78,7 +81,7 @@ export function MiddlePanel() {
   const historyIdx = useRef(0)
   const isUndoingRef = useRef(false)
 
-    // \u64a4\u9500\u5386\u53f2
+    // 撤销历史\u64a4\u9500\u5386\u53f2
   const prevMarkdown = useRef(markdown)
   useEffect(() => {
     if (isUndoingRef.current) {
@@ -339,12 +342,21 @@ const handleTypeset = async () => {
           <span className="h-3.5 w-0.5 rounded-full bg-app-accent" />
           Markdown 编辑器
         </span>
-        <button
-          onClick={() => setToolbarExpanded((v) => !v)}
-          title={toolbarExpanded ? "收起 Markdown 工具栏" : "展开 Markdown 工具栏"}
-          className="flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-[11px] font-medium text-app-text-secondary transition hover:bg-app-hover"
-        >
-          {toolbarExpanded ? (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setClearConfirmOpen(true)}
+            disabled={!richTextHtml && !markdown && !generatedHtml}
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-text-tertiary transition hover:bg-red-50 hover:text-red-500 hover:border-red-200 disabled:cursor-not-allowed disabled:opacity-30"
+            title="清空全部内容"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6" /></svg>
+          </button>
+          <button
+            onClick={() => setToolbarExpanded((v) => !v)}
+            title={toolbarExpanded ? "收起 Markdown 工具栏" : "展开 Markdown 工具栏"}
+            className="flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-[11px] font-medium text-app-text-secondary transition hover:bg-app-hover"
+          >
+        {toolbarExpanded ? (
             <>
               <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6" /></svg>
               <span>收起 Markdown 工具栏</span>
@@ -356,6 +368,7 @@ const handleTypeset = async () => {
             </>
           )}
         </button>
+        </div>
       </div>
       {/* Markdown 快捷工具栏 */}
       {toolbarExpanded && (
@@ -775,6 +788,7 @@ function ensureSpanLeaf(html: string) {
     return doc.body.innerHTML
   } catch (e) { return html }
 }
+
 function ensureTrailingLineBreak(html: string): string {
   // 在 </section> 之前插入 <br>，确保复制到公众号后可继续输入内容
   // 只插一个，避免多渲染时重复叠加

@@ -1,4 +1,4 @@
-﻿import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState } from "react"
 import { useEditorStore } from "../../store/useEditorStore"
 import { useThemeStore } from "../../store/useThemeStore"
 import { copyHtmlToClipboard, downloadHtml } from "../../lib/clipboard/copyHtml"
@@ -22,10 +22,13 @@ export function RightPanel() {
   const theme = Array.isArray(allThemes) ? allThemes.find((t) => t && t.id === selectedThemeId) : undefined
   const isLoading = streamStatus === "streaming" && !generatedHtml
 
+  // 写入 iframe 内容，仅当 generatedHtml 变化时触发；重写前保存滚动位置，重写后恢复
   useEffect(() => {
     if (iframeRef.current && generatedHtml) {
       const doc = iframeRef.current.contentDocument
       if (doc) {
+        const win = iframeRef.current.contentWindow
+        const savedScrollY = win?.scrollY || 0
         doc.open()
         doc.write("<!DOCTYPE html><html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>body{margin:0;padding:10px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;}.gzh-wrapper{max-width:677px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);}</style></head><body><div class=\"gzh-wrapper\">" + generatedHtml + "</div></body></html>")
         doc.close()
@@ -33,9 +36,7 @@ export function RightPanel() {
           try {
             const win = iframeRef.current?.contentWindow
             if (win) {
-              // 实时渲染中跟随最新内容滚动到底部；渲染完成或刷新页面后定位到最上方
-              const targetY = streamStatus === "streaming" ? win.document.body.scrollHeight : 0
-              win.scrollTo(0, targetY)
+              win.scrollTo(0, savedScrollY)
             }
           } catch {
             // 跨域安全限制时忽略
@@ -43,7 +44,23 @@ export function RightPanel() {
         })
       }
     }
-  }, [generatedHtml, streamStatus])
+  }, [generatedHtml])
+
+  // 实时渲染中自动跟随最新内容滚动到底部
+  useEffect(() => {
+    if (streamStatus === "streaming" && generatedHtml) {
+      requestAnimationFrame(() => {
+        try {
+          const win = iframeRef.current?.contentWindow
+          if (win) {
+            win.scrollTo(0, win.document.body.scrollHeight)
+          }
+        } catch {
+          // 跨域安全限制时忽略
+        }
+      })
+    }
+  }, [streamStatus, generatedHtml])
 
   const handleCopy = async () => {
     const ok = await copyHtmlToClipboard(generatedHtml)

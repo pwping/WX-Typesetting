@@ -1,6 +1,6 @@
 import type { ApiKeyConfig, ModelProvider } from '../../types'
 import { getModel, getProvider } from './providers'
-const DEFAULT_TIMEOUT_MS = 300 * 1000 // 300 秒网络超时（�?Agnes 等慢模型足够时间�?
+const DEFAULT_TIMEOUT_MS = 300 * 1000 // 300 秒网络超时（给 Agnes 等慢模型足够时间）
 async function fetchWithTimeout(
   input: string,
   init: RequestInit & { timeout?: number } = {},
@@ -31,7 +31,7 @@ export interface StreamCallbacks {
   onToken: (token: string) => void
   /** 推理/思考内容（thinking mode 下输出） */
   onReasoning?: (token: string) => void
-  /** 推理/思考结束，后续为正式内�?*/
+  /** 推理/思考结束，后续为正式内容 */
   onReasoningEnd?: () => void
   onDone: (fullText: string, finishReason?: string) => void
   onError: (error: Error) => void
@@ -52,18 +52,18 @@ export async function streamChat(
     stream: true,
     max_tokens: model?.maxTokens ?? 32768,
   }
-  // 排版任务不需要思考模式，主动关闭可大幅提�?
-  // disableThinking 默认�?true（排版不需要推理链�?
+  // 排版任务不需要思考模式，主动关闭可大幅提速
+  // disableThinking 默认为 true（排版不需要推理链路）
   const modelInfo = getModel(provider.id, config.modelId)
   const canThink = modelInfo?.supportsThinking === true
   const shouldDisable = options?.disableThinking !== false
   if (canThink && shouldDisable) {
-    // DeepSeek / Kimi(moonshot) 均支�?OpenAI 标准�?thinking 控制参数
+    // DeepSeek / Kimi(moonshot) 均支持 OpenAI 标准的 thinking 控制参数
     // Agnes 明确不支持此参数，跳过不传（Agnes 默认无思考模式）
     if (provider.id === 'deepseek' || provider.id === 'moonshot') {
       body.thinking = { type: 'disabled' }
     }
-    // Agnes 不传 thinking 参数，模型本身默认无思�?
+    // Agnes 不传 thinking 参数，模型本身默认无思考
   }
   let response: Response
   try {
@@ -80,7 +80,7 @@ export async function streamChat(
     if (e instanceof Error && e.name === 'AbortError') {
       return
     }
-    callbacks.onError(new Error(`网络请求失败�?{e instanceof Error ? e.message : '未知错误'}`))
+    callbacks.onError(new Error(`网络请求失败：${e instanceof Error ? e.message : '未知错误'}`))
     return
   }
   if (!response.ok) {

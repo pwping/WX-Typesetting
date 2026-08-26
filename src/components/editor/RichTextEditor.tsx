@@ -17,6 +17,7 @@ export function RichTextEditor() {
   const richTextHtml = useEditorStore((s) => s.richTextHtml)
   const setRichTextHtml = useEditorStore((s) => s.setRichTextHtml)
   const aiContentTrigger = useEditorStore((s) => s.aiContentTrigger)
+  const clearEditorTrigger = useEditorStore((s) => s.clearEditorTrigger)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
@@ -42,7 +43,8 @@ export function RichTextEditor() {
     // 用持久化的内容初始化，刷新后内容不会丢失
     content: richTextHtml || '',
     onUpdate: ({ editor }) => {
-      setRichTextHtml(editor.getHTML())
+      // 空文档（仅剩空段落 <p></p> / placeholder）归一化为 ''，避免清空后残留 <p></p>
+      setRichTextHtml(editor.isEmpty ? '' : editor.getHTML())
     },
     editorProps: {
       attributes: {
@@ -82,6 +84,13 @@ export function RichTextEditor() {
       })
     }
   }, [aiContentTrigger, editor])
+
+  // 监听清空触发器，清空编辑器内容
+  useEffect(() => {
+    if (clearEditorTrigger > 0 && editor) {
+      editor.commands.setContent('')
+    }
+  }, [clearEditorTrigger, editor])
 
   if (!editor) return null
 
