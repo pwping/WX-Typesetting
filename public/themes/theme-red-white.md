@@ -6,7 +6,7 @@
 >
 > **公众号平台限制须知**：
 > - ❌ 不支持 `<style>`/`<script>`、CSS class/id、`position:fixed/absolute`、`float`、`@media`/`@keyframes`、`display:grid`
-> - ✅ 支持内联 `style`、`display:flex`（有限）、`linear-gradient`、`border-radius`、`box-shadow`、`<section>/<p>/<span>/<strong>/<img>` 等基础标签
+> - ✅ 支持内联 `style`、`display:flex`（有限）、`linear-gradient`（可渲染但有暗色模式检测风险，文字背景默认用纯色）、`border-radius`、`box-shadow`、`<section>/<p>/<span>/<strong>/<img>` 等基础标签
 >
 > **WeChat 兼容铁律**（本主题组件全部已按此写好，改动时必须遵守）：
 > - 所有"装饰性空元素"（红色渐变分割线、END 短线、光晕竖条、数据卡分隔）**必须在内部放 `<span leaf=""><br></span>` 占位**，否则微信会剥掉样式
@@ -232,7 +232,7 @@
 ### 7e. 荧光笔效果（偶尔用于长句强调）
 
 ```html
-<span style="background:linear-gradient(180deg,transparent 60%,#FECACA 60%);font-weight:700;color:#1C1917;"><span leaf="">荧光笔效果的重要长句</span></span>
+<span style="background:#FECACA;font-weight:700;color:#1C1917;"><span leaf="">荧光笔效果的重要长句</span></span>
 ```
 
 ### 7f. 行内代码

@@ -191,7 +191,7 @@
 ### 6b. 绿色高亮 —— 核心观点/关键数据
 
 ```html
-<span style="background:linear-gradient(120deg,#A7F3D0 0%,rgba(167,243,208,0) 100%);padding:0 4px;font-weight:600;color:#111;"><span leaf="">{{文字}}</span></span>
+<span style="background:#A7F3D0;padding:0 4px;font-weight:600;color:#111;"><span leaf="">{{文字}}</span></span>
 ```
 
 ### 6c. 绿色下划线 —— 重要短语（正文关键词的默认标记）

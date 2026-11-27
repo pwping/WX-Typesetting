@@ -1,10 +1,17 @@
 import { create } from 'zustand'
-import type { ApiKeyConfig } from '../types'
-import { getApiKey, getSelectedProvider, setSelectedProvider, saveApiKey, deleteApiKey, saveSecret, getSecret, deleteSecret } from '../lib/storage/crypto'
-import { getProvider } from '../lib/llm/providers'
+import type { ApiKeyConfig, ApiProtocol } from '../types'
+import {
+  getUniversalApiConfig,
+  saveUniversalApiConfig,
+  deleteUniversalApiConfig,
+  saveSecret,
+  getSecret,
+  deleteSecret,
+} from '../lib/storage/crypto'
 
 interface SettingsState {
-  providerId: string
+  protocol: ApiProtocol
+  baseUrl: string
   modelId: string
   apiKey: string
   isKeyValid: boolean
@@ -18,9 +25,8 @@ interface SettingsState {
   keyVersion: number
 
   loadSettings: () => void
-  setProvider: (providerId: string) => void
-  saveKey: (providerId: string, modelId: string, apiKey: string) => void
-  removeKey: (providerId: string) => void
+  saveApiConfig: (config: ApiKeyConfig) => void
+  clearApiConfig: () => void
   setShowApiKeyDialog: (show: boolean) => void
   setShowCustomThemeDialog: (show: boolean) => void
   setShowBalanceAlert: (show: boolean, message?: string) => void
@@ -33,9 +39,14 @@ interface SettingsState {
   setShowImgbbDialog: (show: boolean) => void
 }
 
+function isConfigComplete(config: { baseUrl: string; modelId: string; apiKey: string }): boolean {
+  return Boolean(config.baseUrl.trim() && config.modelId.trim() && config.apiKey.trim())
+}
+
 export const useSettingsStore = create<SettingsState>((set, get) => ({
-  providerId: 'deepseek',
-  modelId: 'deepseek-v4-flash',
+  protocol: 'openai',
+  baseUrl: '',
+  modelId: '',
   apiKey: '',
   isKeyValid: false,
   showApiKeyDialog: false,
@@ -48,68 +59,54 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   keyVersion: 0,
 
   loadSettings: () => {
-    const providerId = getSelectedProvider()
-    const stored = getApiKey(providerId)
-    if (stored) {
-      // Auto-upgrade deprecated models
-      const oldModels = ['deepseek-chat', 'deepseek-reasoner', 'moonshot-v1-8k', 'moonshot-v1-32k', 'kimi-k2.5']
-      const upgradeMap: Record<string, string> = {
-        'deepseek-chat': 'deepseek-v4-flash',
-        'deepseek-reasoner': 'deepseek-v4-flash',
-        'moonshot-v1-8k': 'kimi-k2.6',
-        'moonshot-v1-32k': 'kimi-k2.6',
-        'kimi-k2.5': 'kimi-k2.6',
-      }
-      const modelId = oldModels.includes(stored.modelId)
-        ? upgradeMap[stored.modelId] || stored.modelId
-        : stored.modelId
-      if (modelId !== stored.modelId) saveApiKey(providerId, modelId, stored.apiKey)
-      set({
-        providerId,
-        modelId,
-        apiKey: stored.apiKey,
-        isKeyValid: stored.apiKey.length > 0,
-      })
-    } else {
-      const provider = getProvider(providerId)
-      set({
-        providerId,
-        modelId: provider?.models[0]?.id || 'deepseek-v4-flash',
-        apiKey: '',
-        isKeyValid: false,
-      })
-    }
-  },
-
-  setProvider: (providerId: string) => {
-    setSelectedProvider(providerId)
-    const stored = getApiKey(providerId)
-    const provider = getProvider(providerId)
+    const stored = getUniversalApiConfig()
     if (stored) {
       set({
-        providerId,
+        protocol: stored.protocol,
+        baseUrl: stored.baseUrl,
         modelId: stored.modelId,
         apiKey: stored.apiKey,
-        isKeyValid: stored.apiKey.length > 0,
+        isKeyValid: isConfigComplete(stored),
       })
     } else {
       set({
-        providerId,
-        modelId: provider?.models[0]?.id || '',
+        protocol: 'openai',
+        baseUrl: '',
+        modelId: '',
         apiKey: '',
         isKeyValid: false,
       })
     }
   },
 
-  saveKey: (providerId, modelId, apiKey) => {
-    saveApiKey(providerId, modelId, apiKey)
-    set({ providerId, modelId, apiKey, isKeyValid: apiKey.length > 0, keyVersion: get().keyVersion + 1 })
+  saveApiConfig: (config) => {
+    const normalized: ApiKeyConfig = {
+      protocol: config.protocol,
+      baseUrl: config.baseUrl.trim(),
+      modelId: config.modelId.trim(),
+      apiKey: config.apiKey.trim(),
+    }
+    saveUniversalApiConfig(normalized)
+    set({
+      protocol: normalized.protocol,
+      baseUrl: normalized.baseUrl,
+      modelId: normalized.modelId,
+      apiKey: normalized.apiKey,
+      isKeyValid: isConfigComplete(normalized),
+      keyVersion: get().keyVersion + 1,
+    })
   },
 
-  removeKey: (providerId) => {
-    deleteApiKey(providerId)
-    set({ apiKey: '', isKeyValid: false, keyVersion: get().keyVersion + 1 })
+  clearApiConfig: () => {
+    deleteUniversalApiConfig()
+    set({
+      protocol: 'openai',
+      baseUrl: '',
+      modelId: '',
+      apiKey: '',
+      isKeyValid: false,
+      keyVersion: get().keyVersion + 1,
+    })
   },
 
   setShowApiKeyDialog: (show) => set({ showApiKeyDialog: show }),
@@ -135,35 +132,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   getApiKeyConfig: () => {
     const state = get()
-    if (!state.apiKey) return null
+    if (!isConfigComplete(state)) return null
     return {
-      providerId: state.providerId,
-      modelId: state.modelId,
-      apiKey: state.apiKey,
+      protocol: state.protocol,
+      baseUrl: state.baseUrl.trim(),
+      modelId: state.modelId.trim(),
+      apiKey: state.apiKey.trim(),
     }
   },
 
-  // HTML 排版渲染：deepseek 便宜优先，没有则用 kimi，都无则用当前
   getHtmlRenderConfig: (): ApiKeyConfig | null => {
-    const deepseekKey = getApiKey('deepseek')
-    if (deepseekKey?.apiKey) {
-      return { providerId: 'deepseek', modelId: deepseekKey.modelId, apiKey: deepseekKey.apiKey }
-    }
-    const kimiKey = getApiKey('moonshot')
-    if (kimiKey?.apiKey) {
-      const provider = getProvider('moonshot')
-      return { providerId: 'moonshot', modelId: kimiKey.modelId, apiKey: kimiKey.apiKey }
-    }
     return get().getApiKeyConfig()
   },
 
-  // 图片识别：kimi 支持多模态优先，没有则用当前
   getVisionConfig: (): ApiKeyConfig | null => {
-    const kimiKey = getApiKey('moonshot')
-    if (kimiKey?.apiKey) {
-      const provider = getProvider('moonshot')
-      return { providerId: 'moonshot', modelId: provider?.models.some(m => m.id === kimiKey.modelId) ? kimiKey.modelId : (provider?.models[0]?.id || 'kimi-k2.6'), apiKey: kimiKey.apiKey }
-    }
     return get().getApiKeyConfig()
   },
 }))

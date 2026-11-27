@@ -1,5 +1,6 @@
 ﻿import { useHistoryStore } from "../../store/useHistoryStore"
 import { copyHtmlToClipboard, downloadHtml } from "../../lib/clipboard/copyHtml"
+import { useDialogFlash } from "../../hooks/useDialogFlash"
 import { useState } from "react"
 
 const PAGE_SIZE = 10
@@ -17,6 +18,9 @@ export function HistoryDialog({ onClose }: { onClose: () => void }) {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [previewTitle, setPreviewTitle] = useState("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const listFlash = useDialogFlash<HTMLDivElement>(true)
+  const previewFlash = useDialogFlash<HTMLDivElement>(Boolean(previewHtml))
+  const confirmFlash = useDialogFlash<HTMLDivElement>(Boolean(confirmAction))
 
   const totalPages = Math.ceil(records.length / PAGE_SIZE)
   const pageRecords = records.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
@@ -56,8 +60,11 @@ export function HistoryDialog({ onClose }: { onClose: () => void }) {
   return (
     <>
       {/* History list dialog */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center dialog-scrim" {...listFlash.backdropProps}>
         <div
+          ref={listFlash.ref}
+          role="dialog"
+          aria-modal="true"
           className="flex max-h-[90vh] w-[640px] flex-col rounded-2xl border border-app-border bg-app-surface shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
@@ -170,8 +177,11 @@ export function HistoryDialog({ onClose }: { onClose: () => void }) {
 
       {/* Preview modal */}
       {previewHtml && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30" onClick={() => setPreviewHtml(null)}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center dialog-scrim" {...previewFlash.backdropProps}>
           <div
+            ref={previewFlash.ref}
+            role="dialog"
+            aria-modal="true"
             className="flex max-h-[90vh] w-[640px] flex-col rounded-2xl border border-app-border bg-app-surface shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -224,8 +234,11 @@ export function HistoryDialog({ onClose }: { onClose: () => void }) {
 
       {/* Confirmation dialog */}
       {confirmAction && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30" onClick={() => setConfirmAction(null)}>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center dialog-scrim" {...confirmFlash.backdropProps}>
           <div
+            ref={confirmFlash.ref}
+            role="dialog"
+            aria-modal="true"
             className="w-[360px] rounded-2xl bg-app-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >

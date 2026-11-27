@@ -4,7 +4,7 @@ import { RichTextEditor } from "../editor/RichTextEditor"
 import { htmlToMarkdown } from "../../lib/markdown/turndown"
 import { useState, useRef, useEffect } from "react"
 import { streamChat } from "../../lib/llm/client"
-import { getProvider } from "../../lib/llm/providers"
+import { useDialogFlash } from "../../hooks/useDialogFlash"
 
 function countChars(html: string): number {
   return countContentChars(html)
@@ -96,9 +96,6 @@ export function LeftPanel() {
       return
     }
 
-    const provider = getProvider(config.providerId)
-    if (!provider) return
-
     setGenerating(true)
     setGenProgress("准备")
     setReasoningText("")
@@ -112,7 +109,6 @@ export function LeftPanel() {
     try {
       let fullText = ""
       await streamChat(
-        provider,
         config,
         [
           {
@@ -325,6 +321,7 @@ function ImgbbDialog() {
   const [showKey, setShowKey] = useState(false)
   const [expirePreset, setExpirePreset] = useState('')
   const [customDays, setCustomDays] = useState('')
+  const { ref: imgbbPanelRef, backdropProps } = useDialogFlash<HTMLDivElement>(true)
 
   const calcExpiration = (): number => {
     if (expirePreset === 'custom' && customDays) return parseInt(customDays) * 86400
@@ -337,8 +334,14 @@ function ImgbbDialog() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowImgbbDialog(false)}>
-      <div className="flex w-80 flex-col rounded-2xl bg-app-surface p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center dialog-scrim" {...backdropProps}>
+      <div
+        ref={imgbbPanelRef}
+        role="dialog"
+        aria-modal="true"
+        className="flex w-80 flex-col rounded-2xl bg-app-surface p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-app-text">ImgBB 图床配置</span>
           <button onClick={() => setShowImgbbDialog(false)} className="flex h-6 w-6 items-center justify-center rounded-md text-app-text-tertiary transition hover:bg-app-hover">

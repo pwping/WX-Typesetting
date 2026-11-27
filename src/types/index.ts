@@ -29,28 +29,11 @@ export interface TypesetResult {
   createdAt: number
 }
 
-export interface ModelProvider {
-  id: string
-  name: string
-  models: ModelOption[]
-  supportsVision: boolean
-  apiBase: string
-  /** 图片内容格式: 'image_url' (OpenAI标准) | 'image' (智谱等) */
-  imageFormat?: 'image_url' | 'image'
-}
-
-export interface ModelOption {
-  id: string
-  name: string
-  maxTokens: number
-  supportsVision: boolean
-  supportsThinking?: boolean
-  costPer1kInput: number
-  costPer1kOutput: number
-}
+export type ApiProtocol = 'openai' | 'anthropic'
 
 export interface ApiKeyConfig {
-  providerId: string
+  protocol: ApiProtocol
+  baseUrl: string
   modelId: string
   apiKey: string
 }

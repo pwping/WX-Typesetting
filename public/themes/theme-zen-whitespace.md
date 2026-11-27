@@ -11,7 +11,7 @@
 > - ❌ 不支持 `display: grid`
 > - ✅ 支持内联 `style` 属性
 > - ✅ 支持 `display: flex`（有限支持）
-> - ✅ 支持 `linear-gradient`
+> - ✅ 支持 `linear-gradient`（可渲染但有暗色模式检测风险，文字背景默认用纯色）
 > - ✅ 支持 `border-radius`、`box-shadow`
 > - ✅ 支持 `<section>`、`<p>`、`<span>`、`<strong>`、`<img>` 等基础标签
 
@@ -27,7 +27,7 @@
 细线色：            #E8E8E8（1px 分隔线，贯穿全文）
 底色：              #FFFFFF（纯白）
 下划线标记色：      #B5C8BC（低饱和墨绿，正文关键词专用）
-荧光笔色：          #D6E4DC（极浅墨绿，底部半高亮，偶尔用）
+荧光笔色：          #D6E4DC（极浅墨绿，纯色浅底高亮，偶尔用）
 标签底色：          #EEF3F0（极浅墨绿底，胶囊标签用）
 标签文字色：        #3D5046（深墨绿，胶囊标签文字）
 
@@ -238,10 +238,10 @@
 
 ### 7e. 极浅墨绿荧光笔效果
 
-> 底部 40% 极浅绿色高亮，偶尔用于长句强调，仍保持克制。
+> 纯色极浅绿色背景高亮，偶尔用于长句强调，仍保持克制。
 
 ```html
-<span style="background: linear-gradient(180deg, transparent 60%, #D6E4DC 60%);font-weight: 600;color: #2B2B2B;"><span leaf="">荧光笔效果的重要长句</span></span>
+<span style="background: #D6E4DC;font-weight: 600;color: #2B2B2B;"><span leaf="">荧光笔效果的重要长句</span></span>
 ```
 
 ---
@@ -340,7 +340,7 @@
 
 ```html
 <p style="margin-bottom: 26px;font-size: 15px;line-height: 1.9;text-align: justify;font-weight: 600;color: #2B2B2B;padding: 0 16px;">
-  <span style="background: linear-gradient(180deg, transparent 60%, #D6E4DC 60%);"><span leaf="">荧光笔标记的结论句，极浅墨绿底，克制温柔。</span></span>
+  <span style="background: #D6E4DC;"><span leaf="">荧光笔标记的结论句，极浅墨绿底，克制温柔。</span></span>
 </p>
 ```
 
@@ -525,7 +525,7 @@
 | `**加粗文字**` | 组件 7a 普通加粗（默认）或墨绿加粗（锚点） | 普通加粗为主 |
 | `==高亮文字==` | 组件 7b 浅墨绿底深字标签 | 核心概念 |
 | `<u>下划线</u>` | 组件 7d 低饱和墨绿下划线 | 1.5px `#B5C8BC` |
-| `~~荧光笔~~` | 组件 7e 极浅墨绿荧光笔 | 底部半高亮，偶尔用 |
+| `~~荧光笔~~` | 组件 7e 极浅墨绿荧光笔 | 纯色浅底高亮，偶尔用 |
 | `> 引用段落`（金句） | 组件 8a 居中衬线细线引用 | 核心金句，衬线居中最有力 |
 | `> 引用段落`（旁注） | 组件 8b 左竖条轻量引用 | 补充说明 |
 | 极轻量旁注 | 组件 8c 极细线旁注 | 个人感想，字色最浅 |

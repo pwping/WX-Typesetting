@@ -9,17 +9,22 @@ import { RightPanel } from "./components/layout/RightPanel"
 import { ApiKeyDialog } from "./components/topbar/ApiKeyDialog"
 import { CustomThemeDialog } from "./components/topbar/CustomThemeDialog"
 import { BalanceAlert } from "./components/topbar/BalanceAlert"
+import { useDialogFlash } from "./hooks/useDialogFlash"
 
 function ClearConfirmDialog() {
   const clearConfirmOpen = useEditorStore((s) => s.clearConfirmOpen)
   const setClearConfirmOpen = useEditorStore((s) => s.setClearConfirmOpen)
   const clearAll = useEditorStore((s) => s.clearAll)
+  const { ref: panelRef, backdropProps } = useDialogFlash<HTMLDivElement>(clearConfirmOpen)
 
   if (!clearConfirmOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30" onClick={() => setClearConfirmOpen(false)}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center dialog-scrim" {...backdropProps}>
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
         className="w-[360px] rounded-2xl bg-app-surface p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: "dialogIn 0.18s ease-out" }}

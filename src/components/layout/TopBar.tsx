@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useThemeStore } from '../../store/useThemeStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import type { ThemeMeta } from '../../types'
-import { getApiKey } from '../../lib/storage/crypto'
 import { HistoryDialog } from '../topbar/HistoryDialog'
 import { useHistoryStore } from '../../store/useHistoryStore'
+import { useDialogFlash } from '../../hooks/useDialogFlash'
 
 export function TopBar() {
   const builtinThemes = useThemeStore((s) => s.builtinThemes)
@@ -17,15 +17,12 @@ export function TopBar() {
 
   const setShowApiKeyDialog = useSettingsStore((s) => s.setShowApiKeyDialog)
   const setShowCustomThemeDialog = useSettingsStore((s) => s.setShowCustomThemeDialog)
-  const keyVersion = useSettingsStore((s) => s.keyVersion)
-
-  const deepseekKey = useMemo(() => getApiKey('deepseek'), [keyVersion])
-  const kimiKey = useMemo(() => getApiKey('moonshot'), [keyVersion])
-  const anyKeyValid = !!(deepseekKey?.apiKey || kimiKey?.apiKey)
-  const showAuto = !!(deepseekKey?.apiKey && kimiKey?.apiKey)
+  const modelId = useSettingsStore((s) => s.modelId)
+  const anyKeyValid = useSettingsStore((s) => s.isKeyValid)
 
   const [deleteTarget, setDeleteTarget] = useState<ThemeMeta | null>(null)
   const [showHistory, setShowHistory] = useState(false)
+  const { ref: deletePanelRef, backdropProps: deleteBackdropProps } = useDialogFlash<HTMLDivElement>(Boolean(deleteTarget))
   const allThemes = [...builtinThemes, ...customThemes]
   // UI 换肤只取前 3 个主题色
   const uiThemeColors = builtinThemes.slice(0, 3)
@@ -115,19 +112,18 @@ export function TopBar() {
               : 'border-app-border bg-app-hover text-app-text-secondary'
           }`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${anyKeyValid ? 'bg-app-accent' : 'bg-app-text-tertiary'}`} />
-          {anyKeyValid ? (
-            showAuto
-              ? <span>AUTO</span>
-              : <span>{deepseekKey ? deepseekKey.modelId : kimiKey?.modelId}</span>
-          ) : '配置 API'}
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${anyKeyValid ? 'bg-app-accent' : 'bg-app-text-tertiary'}`} />
+          {anyKeyValid ? <span className="max-w-[160px] truncate">{modelId}</span> : '配置 API'}
         </button>
       </div>
 
       {/* 删除确认弹窗 */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setDeleteTarget(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center dialog-scrim" {...deleteBackdropProps}>
           <div
+            ref={deletePanelRef}
+            role="dialog"
+            aria-modal="true"
             className="w-[360px] rounded-2xl bg-app-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >

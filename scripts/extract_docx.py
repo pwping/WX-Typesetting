@@ -95,15 +95,16 @@ def extract(docx_path, out_md):
         tag = el.tag
         if tag == f"{W}tbl":
             # 表格 → Markdown 表格，保住行列结构（合并单元格按普通格处理）
-            rows = []
+            rows, ncols = [], 0
             for tr in el.findall(f"{W}tr"):
                 cells = ["".join(t.text or "" for t in tc.iter(f"{W}t"))
                          .strip().replace("|", "\\|") or " "
                          for tc in tr.findall(f"{W}tc")]
+                if not rows:
+                    ncols = len(cells)
                 rows.append("| " + " | ".join(cells) + " |")
             if rows:
                 lines.append(rows[0])
-                ncols = rows[0].count("|") - 1
                 lines.append("|" + "---|" * ncols)
                 lines.extend(rows[1:])
                 lines.append("")

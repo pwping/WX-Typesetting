@@ -4,6 +4,8 @@ import { useThemeStore } from "../../store/useThemeStore"
 import { copyHtmlToClipboard, downloadHtml } from "../../lib/clipboard/copyHtml"
 import type { ValidationResult, StreamStatus } from "../../types"
 import { domToPng, domToCanvas } from "modern-screenshot"
+import { useDialogFlash } from "../../hooks/useDialogFlash"
+import { createPortal } from "react-dom"
 
 export function RightPanel() {
   const generatedHtml = useEditorStore((s) => s.generatedHtml)
@@ -17,6 +19,7 @@ export function RightPanel() {
   const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [capturing, setCapturing] = useState(false)
   const [showScreenshotDialog, setShowScreenshotDialog] = useState(false)
+  const { ref: screenshotPanelRef, backdropProps: screenshotBackdropProps } = useDialogFlash<HTMLDivElement>(showScreenshotDialog)
 
   const allThemes = getAllThemes()
   const theme = Array.isArray(allThemes) ? allThemes.find((t) => t && t.id === selectedThemeId) : undefined
@@ -230,12 +233,15 @@ export function RightPanel() {
         progress={streamProgress}
       />
 
-      {showScreenshotDialog && (
+      {showScreenshotDialog && createPortal(
         <div
-          className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          onClick={() => setShowScreenshotDialog(false)}
+          className="dialog-scrim fixed inset-0 z-[60] flex items-center justify-center"
+          {...screenshotBackdropProps}
         >
           <div
+            ref={screenshotPanelRef}
+            role="dialog"
+            aria-modal="true"
             className="w-72 overflow-hidden rounded-2xl bg-app-surface shadow-2xl ring-1 ring-app-border"
             onClick={(e) => e.stopPropagation()}
             style={{ animation: "dialogIn 0.18s ease-out" }}
@@ -308,7 +314,8 @@ export function RightPanel() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

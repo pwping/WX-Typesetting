@@ -6,7 +6,7 @@
 >
 > **公众号平台限制须知**：
 > - ❌ 不支持 `<style>`/`<script>`、CSS class/id、`position:fixed/absolute`、`float`、`@media`/`@keyframes`、`display:grid`
-> - ✅ 支持内联 `style`、`display:flex`（有限）、`linear-gradient`、`border-radius`、`box-shadow`、`<section>/<p>/<span>/<strong>/<img>` 等基础标签
+> - ✅ 支持内联 `style`、`display:flex`（有限）、`linear-gradient`（可渲染但有暗色模式检测风险，文字背景默认用纯色）、`border-radius`、`box-shadow`、`<section>/<p>/<span>/<strong>/<img>` 等基础标签
 >
 > **WeChat 兼容铁律**（本主题组件全部已按此写好，改动时必须遵守）：
 > - 所有"装饰性空元素"（圆点、渐变分割线、装饰短横、时间线竖线）**必须在内部放 `<span leaf=""><br></span>` 占位**，否则微信会剥掉样式
@@ -106,7 +106,7 @@
       </section>
     </section>
   </section>
-  <section style="background:linear-gradient(135deg,#059669,#10B981);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;">
+  <section style="background:#059669;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;">
     <p style="font-size:12px;color:rgba(255,255,255,0.9);margin:0;font-weight:600;letter-spacing:0.5px;">
       <span leaf="">{{底部左侧文字}}</span>
     </p>
@@ -148,7 +148,7 @@
       </p>
     </section>
   </section>
-  <section style="background:linear-gradient(135deg,#059669,#10B981);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;">
+  <section style="background:#059669;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;">
     <p style="font-size:12px;color:rgba(255,255,255,0.9);margin:0;font-weight:600;letter-spacing:0.5px;">
       <span leaf="">{{底部左侧文字}}</span>
     </p>
@@ -186,7 +186,7 @@
   </section>
   <section style="overflow-x:scroll;-webkit-overflow-scrolling:touch;white-space:nowrap;padding-bottom:8px;">
     <!-- 第一个（当前高亮，绿色背景） -->
-    <section style="display:inline-block;white-space:normal;vertical-align:top;width:110px;background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;padding:12px;margin-right:8px;">
+    <section style="display:inline-block;white-space:normal;vertical-align:top;width:110px;background:#059669;border-radius:12px;padding:12px;margin-right:8px;">
       <p style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:1px;margin:0 0 5px;">
         <span leaf="">PART 01</span>
       </p>
@@ -286,10 +286,10 @@
 <strong style="color:#059669;background:rgba(5,150,105,0.1);padding:0 4px;border-radius:2px;"><span leaf="">文字</span></strong>
 ```
 
-### 6c. 黄色渐变高亮（一段话中最想让读者注意的短语，每段不超过 1-2 处）
+### 6c. 黄色纯色高亮（一段话中最想让读者注意的短语，每段不超过 1-2 处）
 
 ```html
-<span style="background:linear-gradient(120deg,#FDE68A 0%,rgba(255,255,255,0) 100%);padding:0 4px;border-radius:2px;font-weight:600;color:#111827;"><span leaf="">文字</span></span>
+<span style="background:#FDE68A;padding:0 4px;border-radius:2px;font-weight:600;color:#111827;"><span leaf="">文字</span></span>
 ```
 
 ### 6d. 黄色底部高亮（下划线效果）
@@ -467,11 +467,11 @@
 </section>
 ```
 
-### 9c. subtitle-highlight（小节黄色下划线标题）
+### 9c. subtitle-highlight（小节黄色浅底标题）
 
 ```html
 <p style="font-size:15px;font-weight:900;color:#111827;margin-bottom:16px;">
-  <span style="background:linear-gradient(180deg,transparent 65%,#FDE68A 65%);padding:0 4px;"><span leaf="">{{小节标题}}</span></span>
+  <span style="background:#FDE68A;padding:0 4px;"><span leaf="">{{小节标题}}</span></span>
 </p>
 ```
 
@@ -571,7 +571,7 @@
 ```html
 <section style="background:#F9FAFB;padding:16px;border-radius:12px;border:1px solid #F3F4F6;margin-bottom:24px;">
   <section style="display:flex;align-items:stretch;justify-content:center;gap:6px;">
-    <section style="flex:1;text-align:center;padding:10px 8px;background:linear-gradient(135deg,#059669,#10B981);border-radius:8px;">
+    <section style="flex:1;text-align:center;padding:10px 8px;background:#059669;border-radius:8px;">
       <p style="font-size:13px;font-weight:800;color:#fff;margin:0 0 3px;">
         <span leaf="">{{步骤1标题}}</span>
       </p>
@@ -615,7 +615,7 @@
 ```html
 <section style="background:#F9FAFB;padding:16px;border-radius:12px;border:1px solid #F3F4F6;margin-bottom:28px;">
   <section style="display:flex;align-items:stretch;justify-content:center;gap:6px;">
-    <section style="flex:1;text-align:center;padding:10px 8px;background:linear-gradient(135deg,#059669,#10B981);border-radius:8px;">
+    <section style="flex:1;text-align:center;padding:10px 8px;background:#059669;border-radius:8px;">
       <p style="font-size:13px;font-weight:800;color:#fff;margin:0 0 3px;">
         <span leaf="">{{卡片1标题}}</span>
       </p>
@@ -793,7 +793,7 @@
 固定文案照写；SVG 图标微信支持，原样保留。
 
 ```html
-<section style="background:radial-gradient(circle at center,#F9FAFB 0%,#FFFFFF 100%);border:1px solid #E5E7EB;border-radius:16px;padding:32px 20px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.03);margin:0 0 24px;">
+<section style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:16px;padding:32px 20px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.03);margin:0 0 24px;">
   <p style="font-size:13px;font-weight:bold;color:#111827;margin-bottom:20px;line-height:1.6;">
     <span leaf="">既然看到这里了，如果觉得有用，随手点个赞、在看、转发三连吧。</span>
   </p>
@@ -873,13 +873,13 @@
 | 层级 | 样式 | 用途 | 频率 |
 |------|------|------|------|
 | **锚点层** | 绿色加粗 6a / 黄底下划线 6d / oneliner-card 9b | 核心概念、产品名、关键结论 | 全文 ≤5 处 |
-| **标记层** | 绿色下划线 6e（默认）/ 黄色渐变高亮 6c | 正文关键词强调 | 每段 1~3 处 |
+| **标记层** | 绿色下划线 6e（默认）/ 黄色纯色高亮 6c | 正文关键词强调 | 每段 1~3 处 |
 | **容器层** | quote-box 9a / 提示 10x / 胶囊 11a / 卡片 11x | 引用、旁注、提示、结构化信息 | 按需 |
 
 **克制原则**：
 - 黄色高亮每段不超过 1-2 处；一段内不超过 2 种高亮效果
 - 红色下划线只用于对比/否定，不做普通强调
-- 渐变绿仅出现在封面底条、目录首卡、流程首卡等结构位
+- 绿色纯色背景仅出现在封面底条、目录首卡、流程首卡等结构位
 
 ---
 
@@ -893,7 +893,7 @@
 | 盘点/工具清单 | skill/tool-label 7c + tool-card 11e + pill-list 11a | table 11f、oneliner-card 9b |
 | 观点/深度分析 | paragraph 5 + quote-box 9a + oneliner-card 9b | center-divider 9d、subtitle-highlight 9c |
 | 访谈/人物特稿 | paragraph 5 + quote-box 9a（引语）+ timeline 11d（经历脉络） | oneliner-card 9b、center-divider 9d |
-| 数据复盘/报告 | three-col-cards 11c + table 11f + ordered-list 11g | green-info 10d、黄色渐变高亮 6c |
+| 数据复盘/报告 | three-col-cards 11c + table 11f + ordered-list 11g | green-info 10d、黄色纯色高亮 6c |
 | 生活/情感随笔 | paragraph 5 + oneliner-card 9b + center-divider 9d | quote-box 9a（少量） |
 | 案例实战 | case-label 7b / timeline 11d + step-label 7a | prompt-block 8a、yellow-warning 10c |
 
@@ -908,10 +908,10 @@
 | `# 标题` | 不使用 | 公众号文章标题在平台设置；封面主标题从中提炼（视角错开） |
 | 文章开头 `> 引言` | 组件 9b oneliner-card 或并入封面副标题 | 开头金句 |
 | `## 章节标题` | 组件 4 chapter-title | PART 01/02/03…，末章 /// + LAST |
-| `### 子标题` | 组件 9c subtitle-highlight | 黄色下划线小节标题 |
+| `### 子标题` | 组件 9c subtitle-highlight | 黄色浅底小节标题 |
 | 普通段落 | 组件 5 paragraph | 每段主动标 1~3 处绿色下划线 6e |
 | `**加粗文字**` | 组件 6a 绿色加粗 | 核心概念/品牌名 |
-| `==高亮文字==` | 组件 6c 黄色渐变高亮 | 每段 ≤2 处 |
+| `==高亮文字==` | 组件 6c 黄色纯色高亮 | 每段 ≤2 处 |
 | `<u>下划线</u>` / `++文字++` | 组件 6e 绿色下划线 | 次要强调 |
 | `~~删除线~~` | 组件 6i 删除线灰色 | 被淘汰的概念 |
 | `> 引用段落`（非开头） | 组件 9a quote-box | 灰色虚线框（本主题特征） |

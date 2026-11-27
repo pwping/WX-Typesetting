@@ -4,7 +4,6 @@ import { useThemeStore } from "../../store/useThemeStore"
 import { loadThemeComponentLibrary, loadCommonComponents, loadSkillInstructions } from "../../lib/themes/builtin"
 import { streamChat } from "../../lib/llm/client"
 import { buildTypesetPrompt } from "../../lib/llm/promptBuilder"
-import { getProvider } from "../../lib/llm/providers"
 import { validateHtml } from "../../lib/validation/htmlValidator"
 import { useHistoryStore } from "../../store/useHistoryStore"
 import { uploadImage } from "../../lib/storage/imgUpload"
@@ -144,9 +143,6 @@ const handleTypeset = async () => {
         return
       }
 
-      const provider = getProvider(config.providerId)
-      if (!provider) return
-
       const allThemes = getAllThemes()
       if (!Array.isArray(allThemes) || allThemes.length === 0) {
         setStreamStatus("error", "主题列表为空，请刷新页面后重试")
@@ -198,9 +194,8 @@ const handleTypeset = async () => {
 
       let fullHtml = ""
       await streamChat(
-        provider,
         config,
-        messages as Parameters<typeof streamChat>[2],
+        messages as Parameters<typeof streamChat>[1],
         {
           onToken: (token) => {
             fullHtml += token

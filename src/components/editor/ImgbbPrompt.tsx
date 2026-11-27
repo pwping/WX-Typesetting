@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useSettingsStore } from '../../store/useSettingsStore'
+import { useDialogFlash } from '../../hooks/useDialogFlash'
 
 interface Props {
   show: boolean
@@ -8,11 +9,19 @@ interface Props {
 
 /** 图床未配置时的提示弹窗，点击"去配置"打开 ImgBB 配置菜单 */
 export function ImgbbPrompt({ show, onClose }: Props) {
+  const { ref: panelRef, backdropProps } = useDialogFlash<HTMLDivElement>(show)
+
   if (!show) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="flex w-72 flex-col rounded-2xl bg-app-surface p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center dialog-scrim" {...backdropProps}>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        className="flex w-72 flex-col rounded-2xl bg-app-surface p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-app-text">图床未配置</span>
           <button onClick={onClose} className="flex h-6 w-6 items-center justify-center rounded-md text-app-text-tertiary transition hover:bg-app-hover">

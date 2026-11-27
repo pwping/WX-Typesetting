@@ -27,6 +27,20 @@ dist-ssr
 # 本地实现计划（不提交）
 docs/superpowers/plans/
 
+# 原型/设计稿目录（不提交）
+design-demos/
+
+# 上游 skill 参考仓库（isjiamu/gzh-design-skill 本地 clone，仅用于对比，禁止提交/推送）
+upstream/
+.upstream/
+gzh-skill/
+gzh-design-skill/
+*.upstream-tmp/
+
+# 临时对比/校验产物
+.tmp/
+.tmp-*
+
 # scratch files
 _ds.html
 _ds2.html

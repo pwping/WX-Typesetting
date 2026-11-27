@@ -22,6 +22,9 @@ const SKIP_TAGS = new Set(['head', 'title', 'style', 'script'])
 const HALF_PUNCT_REGEX = /[\u4e00-\u9fff\u3400-\u9fff][,;!?]/
 const ASCII_QUOTE_REGEX = /["']/
 const CODE_STYLE_REGEX = /monospace|white-space\s*:\s*pre|courier|consolas|sf mono/i
+// 只检查内联背景声明，跳过 CSS 注释、字符串和图片 URL 中的示例文字
+const CSS_NON_FUNCTION_REGEX = /\/\*[\s\S]*?\*\/|url\(\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^)]*)\s*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/gi
+const GRADIENT_BACKGROUND_REGEX = /(?:^|;)\s*background(?:-image)?\s*:[^;]*(?:repeating-)?(?:linear|radial|conic)-gradient\s*\(/i
 
 export function validateHtml(html: string): ValidationResult {
   const errors: ValidationIssue[] = []
@@ -37,7 +40,7 @@ export function validateHtml(html: string): ValidationResult {
     }
   }
 
-  const { spanLeafCount, unwrapped, halfPunct } = checkLeafWrapping(html)
+  const { spanLeafCount, unwrapped, halfPunct, gradients } = checkLeafWrapping(html)
 
   const hasCjk = CJK_REGEX.test(html)
   if (hasCjk && spanLeafCount === 0) {
@@ -62,6 +65,20 @@ export function validateHtml(html: string): ValidationResult {
     })
   }
 
+  if (gradients.length > 0) {
+    const counts = gradients.reduce<Record<string, number>>((acc, tag) => {
+      acc[tag] = (acc[tag] || 0) + 1
+      return acc
+    }, {})
+    const detail = Object.entries(counts)
+      .map(([tag, n]) => `<${tag}>×${n}`)
+      .join('、')
+    warnings.push({
+      level: 'WARNING',
+      message: `${gradients.length} 处渐变背景（${detail}），可能触发公众号 darkmode-no-gradient 内容结构检测；文字/卡片背景建议改为主题内纯色或 rgba 纯色，纯装饰渐变需人工确认`,
+    })
+  }
+
   return {
     passed: errors.length === 0,
     errors,
@@ -74,6 +91,7 @@ interface LeafCheckResult {
   spanLeafCount: number
   unwrapped: Array<{ snippet: string; parent: string }>
   halfPunct: string[]
+  gradients: string[]
 }
 
 function checkLeafWrapping(html: string): LeafCheckResult {
@@ -83,6 +101,7 @@ function checkLeafWrapping(html: string): LeafCheckResult {
   let spanLeafCount = 0
   const unwrapped: Array<{ snippet: string; parent: string }> = []
   const halfPunct: string[] = []
+  const gradients: string[] = []
 
   function walkNode(node: Node, parentTag: string, inLeaf: boolean, inCode: boolean): void {
     if (node.nodeType !== Node.TEXT_NODE) {
@@ -97,6 +116,9 @@ function checkLeafWrapping(html: string): LeafCheckResult {
         const isCode = CODE_STYLE_REGEX.test(style) || tag === 'code' || tag === 'pre'
 
         if (isLeaf) spanLeafCount++
+
+        const cssProbe = style.replace(CSS_NON_FUNCTION_REGEX, '')
+        if (GRADIENT_BACKGROUND_REGEX.test(cssProbe)) gradients.push(tag)
 
         for (const child of Array.from(el.childNodes)) {
           walkNode(child, tag, inLeaf || isLeaf, inCode || isCode)
@@ -121,5 +143,5 @@ function checkLeafWrapping(html: string): LeafCheckResult {
 
   walkNode(doc.body, 'body', false, false)
 
-  return { spanLeafCount, unwrapped, halfPunct }
+  return { spanLeafCount, unwrapped, halfPunct, gradients }
 }

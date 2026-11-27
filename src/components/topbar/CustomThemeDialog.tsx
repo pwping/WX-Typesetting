@@ -4,10 +4,10 @@ import { useThemeStore } from "../../store/useThemeStore"
 import { streamChat, estimateTokens } from "../../lib/llm/client"
 import { buildCustomThemePrompt } from "../../lib/llm/promptBuilder"
 import type { CustomThemeParams } from "../../lib/llm/promptBuilder"
-import { getProvider } from "../../lib/llm/providers"
 import { saveCustomTheme, themeNameToFileId } from "../../lib/storage/customThemes"
 import { loadThemeGeneratorInstructions } from "../../lib/themes/builtin"
 import { extractThemePreviewHtml } from "../../lib/markdown/render"
+import { useDialogFlash } from "../../hooks/useDialogFlash"
 import type { CustomTheme, StreamStatus, ApiKeyConfig } from "../../types"
 
 type Tab = "text" | "image"
@@ -39,6 +39,7 @@ export function CustomThemeDialog() {
   const previewIframeRef = useRef<HTMLIFrameElement>(null)
   const previewTimerRef = useRef<number | null>(null)
   const previewLastTsRef = useRef(0)
+  const { ref: panelRef, backdropProps } = useDialogFlash<HTMLDivElement>(show)
 
   // 节流 + 尾随防抖更新预览：
   // 纯 debounce 在快速流式下会被无限重置，导致预览长时间空白；
@@ -86,9 +87,8 @@ export function CustomThemeDialog() {
   }, [previewSrcDoc])
 
   if (!show) return null
-  const hasAnyKey = !!(useSettingsStore.getState().getHtmlRenderConfig() || useSettingsStore.getState().getVisionConfig())
-  const config = useSettingsStore.getState().getHtmlRenderConfig() || useSettingsStore.getState().getVisionConfig()
-  const provider = config ? getProvider(config.providerId) : null
+  const config = useSettingsStore.getState().getApiKeyConfig()
+  const hasAnyKey = !!config
   // 图片模式需要图片；文字模式需要描述
   const canGenerate = hasAnyKey && (
     tab === "image" ? !!imageBase64 : prompt.trim().length > 0
@@ -150,13 +150,9 @@ export function CustomThemeDialog() {
 
 
   const handleGenerate = async () => {
-    // 智能模型选择：图片识别用 kimi，文字生成用 deepseek
-    const renderConfig: ApiKeyConfig | null = tab === 'image'
-      ? useSettingsStore.getState().getVisionConfig()
-      : useSettingsStore.getState().getHtmlRenderConfig()
+    // 使用当前选中的模型（选谁用谁，不再按 tab 自动切换供应商）
+    const renderConfig: ApiKeyConfig | null = useSettingsStore.getState().getApiKeyConfig()
     if (!renderConfig) { setShowApiKeyDialog(true); return }
-    const provider = getProvider(renderConfig.providerId)
-    if (!provider) return
 
     setStatus("streaming")
     setProgress("加载 Skill 规则...")
@@ -165,13 +161,6 @@ export function CustomThemeDialog() {
     setStepLabel("")
 
     let themeGenInstructions = ""
-    // 检查模型是否支持图片识别（kimi 优先时自动有 vision 支持）
-    const currentModel = provider.models.find(m => m.id === renderConfig.modelId)
-    if (tab === 'image' && !currentModel?.supportsVision) {
-      setStatus('error')
-      setError(`当前模型（${currentModel?.name || '未知模型'}）不支持图片识别，请先配置 Kimi API Key`)
-      return
-    }
     try {
       themeGenInstructions = await loadThemeGeneratorInstructions()
     } catch {
@@ -217,9 +206,8 @@ export function CustomThemeDialog() {
       let metaColor = ""
       let metaScene = ""
       await streamChat(
-        provider,
         renderConfig,
-        messages as Parameters<typeof streamChat>[2],
+        messages as Parameters<typeof streamChat>[1],
         {
           onToken: (token) => {
             fullHtml += token
@@ -363,8 +351,11 @@ export function CustomThemeDialog() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={handleClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center dialog-scrim" {...backdropProps}>
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
         className="w-[680px] max-h-[90vh] flex flex-col rounded-2xl border border-app-border bg-app-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >

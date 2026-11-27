@@ -1,6 +1,9 @@
 import CryptoJS from 'crypto-js'
+import type { ApiKeyConfig, ApiProtocol } from '../../types'
+import { LEGACY_PROVIDER_BASE_URLS } from '../llm/providers'
 
-const STORAGE_KEY = 'gzh_api_keys'
+const LEGACY_STORAGE_KEY = 'gzh_api_keys'
+const UNIVERSAL_STORAGE_KEY = 'gzh_universal_api_config'
 const SALT_KEY = 'gzh_salt'
 
 function getOrCreateSalt(): string {
@@ -26,56 +29,88 @@ function deriveKey(): string {
   }).toString()
 }
 
-interface StoredKeys {
+interface StoredUniversalConfig {
+  protocol: ApiProtocol
+  baseUrl: string
+  modelId: string
+  encryptedKey: string
+}
+
+interface LegacyStoredKeys {
   [providerId: string]: {
     modelId: string
     encryptedKey: string
   }
 }
 
-export function saveApiKey(providerId: string, modelId: string, apiKey: string): void {
-  const keys = getAllEncrypted()
-  keys[providerId] = {
-    modelId,
-    encryptedKey: CryptoJS.AES.encrypt(apiKey, deriveKey()).toString(),
+export function saveUniversalApiConfig(config: ApiKeyConfig): void {
+  const payload: StoredUniversalConfig = {
+    protocol: config.protocol,
+    baseUrl: config.baseUrl.trim(),
+    modelId: config.modelId.trim(),
+    encryptedKey: CryptoJS.AES.encrypt(config.apiKey.trim(), deriveKey()).toString(),
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(keys))
+  localStorage.setItem(UNIVERSAL_STORAGE_KEY, JSON.stringify(payload))
 }
 
-export function getApiKey(providerId: string): { modelId: string; apiKey: string } | null {
-  const keys = getAllEncrypted()
-  const entry = keys[providerId]
-  if (!entry) return null
+export function getUniversalApiConfig(): ApiKeyConfig | null {
+  const raw = localStorage.getItem(UNIVERSAL_STORAGE_KEY)
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as Partial<StoredUniversalConfig>
+      if (!parsed.encryptedKey) return null
+      const decrypted = CryptoJS.AES.decrypt(parsed.encryptedKey, deriveKey()).toString(
+        CryptoJS.enc.Utf8,
+      )
+      if (!decrypted) return null
+      const protocol: ApiProtocol = parsed.protocol === 'anthropic' ? 'anthropic' : 'openai'
+      return {
+        protocol,
+        baseUrl: parsed.baseUrl || '',
+        modelId: parsed.modelId || '',
+        apiKey: decrypted,
+      }
+    } catch {
+      return null
+    }
+  }
+
+  // 兼容迁移旧版按供应商存储的 Key
+  return migrateLegacyApiConfig()
+}
+
+export function deleteUniversalApiConfig(): void {
+  localStorage.removeItem(UNIVERSAL_STORAGE_KEY)
+  localStorage.removeItem(LEGACY_STORAGE_KEY)
+  localStorage.removeItem('gzh_selected_provider')
+}
+
+function migrateLegacyApiConfig(): ApiKeyConfig | null {
   try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (!raw) return null
+    const legacy = JSON.parse(raw) as LegacyStoredKeys
+    const selected = localStorage.getItem('gzh_selected_provider') || 'deepseek'
+    const candidateId = legacy[selected] ? selected : Object.keys(legacy)[0]
+    if (!candidateId || !legacy[candidateId]) return null
+
+    const entry = legacy[candidateId]
     const decrypted = CryptoJS.AES.decrypt(entry.encryptedKey, deriveKey()).toString(
       CryptoJS.enc.Utf8,
     )
-    return { modelId: entry.modelId, apiKey: decrypted }
+    if (!decrypted) return null
+
+    const migrated: ApiKeyConfig = {
+      protocol: 'openai',
+      baseUrl: LEGACY_PROVIDER_BASE_URLS[candidateId] || 'https://api.deepseek.com/v1',
+      modelId: entry.modelId || 'deepseek-chat',
+      apiKey: decrypted,
+    }
+    saveUniversalApiConfig(migrated)
+    return migrated
   } catch {
     return null
   }
-}
-
-export function deleteApiKey(providerId: string): void {
-  const keys = getAllEncrypted()
-  delete keys[providerId]
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(keys))
-}
-
-function getAllEncrypted(): StoredKeys {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-  } catch {
-    return {}
-  }
-}
-
-export function getSelectedProvider(): string {
-  return localStorage.getItem('gzh_selected_provider') || 'deepseek'
-}
-
-export function setSelectedProvider(providerId: string): void {
-  localStorage.setItem('gzh_selected_provider', providerId)
 }
 
 // 通用密钥加密存储（用于图床、第三方服务等任意 Key）

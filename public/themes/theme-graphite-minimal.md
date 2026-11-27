@@ -6,7 +6,7 @@
 >
 > **公众号平台限制须知**：
 > - ❌ 不支持 `<style>`/`<script>`、CSS class/id/`<div>`、`position:fixed/absolute/sticky`、`float`、`@media`/`@keyframes`、`display:grid`、CSS 变量 `var(--x)`
-> - ✅ 支持内联 `style`、`display:flex`（有限）、`linear-gradient`、`border-radius`、`box-shadow`、`position:relative`、`<section>/<p>/<span>/<strong>/<img>` 等基础标签
+> - ✅ 支持内联 `style`、`display:flex`（有限）、`linear-gradient`（可渲染但有暗色模式检测风险，文字背景默认用纯色）、`border-radius`、`box-shadow`、`position:relative`、`<section>/<p>/<span>/<strong>/<img>` 等基础标签
 > - font-size ≤ 24px；正文强调用左竖条/石墨下划线/小标签，**不用四周虚线框**（dashed）
 >
 > **WeChat 兼容铁律**（本主题组件全部已按此写好，改动时必须遵守）：
@@ -237,10 +237,10 @@
 <span style="border-bottom:2px solid #52525B;font-weight:600;color:#27272A;"><span leaf="">石墨下划线关键词</span></span>
 ```
 
-### 7e. 荧光笔效果（偶尔用于长句强调，底部 40% 极浅灰高亮）
+### 7e. 荧光笔效果（偶尔用于长句强调，纯色浅灰背景高亮）
 
 ```html
-<span style="background:linear-gradient(180deg,transparent 60%,#E4E4E7 60%);font-weight:700;color:#27272A;"><span leaf="">荧光笔效果的重要长句</span></span>
+<span style="background:#E4E4E7;font-weight:700;color:#27272A;"><span leaf="">荧光笔效果的重要长句</span></span>
 ```
 
 ### 7f. 橙色下划线（点睛锚点，全篇 ≤3 处含引言卡）
