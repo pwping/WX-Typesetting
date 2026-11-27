@@ -24,8 +24,8 @@ dist-ssr
 *.sw?
 .workbuddy/
 
-# 本地实现计划（不提交）
-docs/superpowers/plans/
+# 本地实现计划与设计稿（不提交）
+docs/superpowers/
 
 # 原型/设计稿目录（不提交）
 design-demos/
